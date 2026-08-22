@@ -203,20 +203,29 @@
       document.getElementById('namaUserLengkap').innerText = data.user.nama; document.getElementById('avatarInisial').innerText = data.user.nama.charAt(0).toUpperCase(); document.getElementById('roleUser').innerText = data.user.role;
 
       let htmlMenu = ''; const role = data.user.role.toLowerCase();
-      if (role.includes('bendahara')) {
+      
+      // 1. KASTA YAYASAN (Petinggi yang cuma ACC dan Pantau)
+      if (role === 'bendahara yayasan' || role === 'yayasan' || role.includes('ketua yayasan')) {
+        htmlMenu += `<div class="menu-card" onclick='bukaModul("meja_yayasan")'><div class="menu-icon-wrap"><i class="bi bi-bank"></i></div><p class="menu-title">ACC Tagihan</p></div>`;
+        htmlMenu += `<div class="menu-card" onclick='bukaModul("kasir_keuangan")'><div class="menu-icon-wrap"><i class="bi bi-cash-coin"></i></div><p class="menu-title">Pantau Kasir</p></div>`;
+      } 
+      // 2. KASTA BENDAHARA SEKOLAH (Operator Lapangan)
+      else if (role.includes('bendahara')) { 
         htmlMenu += `<div class="menu-card" onclick='bukaModul("verifikasi")'><div class="menu-icon-wrap"><i class="bi bi-ui-checks"></i></div><p class="menu-title">Verifikasi PPDB</p></div>`;
         htmlMenu += `<div class="menu-card" onclick='bukaModul("buat_kontrak")'><div class="menu-icon-wrap"><i class="bi bi-file-earmark-plus"></i></div><p class="menu-title">Buat Tagihan</p></div>`;
-        
-        // TAB MENU BARU: EDIT DISKON
         htmlMenu += `<div class="menu-card" onclick='bukaModul("edit_diskon")'><div class="menu-icon-wrap"><i class="bi bi-tags"></i></div><p class="menu-title">Edit Diskon</p></div>`;
-        
         htmlMenu += `<div class="menu-card" onclick='bukaModul("kasir_keuangan")'><div class="menu-icon-wrap"><i class="bi bi-cash-coin"></i></div><p class="menu-title">Kasir Pembayaran</p></div>`;
-      } else if (role.includes('admin') || role.includes('kepala') || role.includes('yayasan')) {
+      } 
+      // 3. KASTA KEPALA SEKOLAH / ADMIN
+      else if (role.includes('admin') || role.includes('kepala')) {
         htmlMenu += `<div class="menu-card" onclick='bukaModul("verifikasi")'><div class="menu-icon-wrap"><i class="bi bi-ui-checks"></i></div><p class="menu-title">Meja Verifikasi</p></div>`;
         htmlMenu += `<div class="menu-card" onclick='bukaModul("meja_yayasan")'><div class="menu-icon-wrap"><i class="bi bi-bank"></i></div><p class="menu-title">ACC Tagihan</p></div>`;
-      } else {
+      } 
+      // 4. KASTA ORANG TUA SISWA
+      else {
         htmlMenu += `<div class="menu-card" onclick='bukaModul("keuangan")'><div class="menu-icon-wrap"><i class="bi bi-wallet2"></i></div><p class="menu-title">Keuangan & SPP</p></div>`;
       }
+      
       document.getElementById('areaMenu').innerHTML = htmlMenu;
     }
 
