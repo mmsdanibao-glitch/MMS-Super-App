@@ -246,32 +246,16 @@
     window.addEventListener('DOMContentLoaded', () => { const sesi = localStorage.getItem('sesiPortalNCIPS'); if (sesi) tampilkanDashboard(JSON.parse(sesi)); });
     
     document.getElementById('formLoginUtama').addEventListener('submit', function(e) { 
-        e.preventDefault(); 
-        const btn = document.getElementById('btnLogin'); 
-        btn.innerHTML = 'Memeriksa...'; 
-        btn.disabled = true; 
-        
-        fetch(API_URL, { 
-            method: "POST", 
-            headers: { "Content-Type": "text/plain;charset=utf-8" }, 
-            body: JSON.stringify({ action: 'login', email: document.getElementById('loginEmail').value, password: document.getElementById('loginPassword').value }) 
-        })
-        .then(r => r.json())
-        .then(res => { 
-            if (res.status === 'success') { 
-                localStorage.setItem('sesiPortalNCIPS', JSON.stringify(res)); 
-                tampilkanDashboard(res); 
-            } else { 
-                SwalMin.fire({title: 'Gagal', text: res.pesan, icon: 'error'}); 
-                btn.innerHTML = 'Masuk Aplikasi'; 
-                btn.disabled = false; 
-            } 
+        e.preventDefault(); const btn = document.getElementById('btnLogin'); btn.innerHTML = 'Memeriksa...'; btn.disabled = true; 
+        fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: 'login', email: document.getElementById('loginEmail').value, password: document.getElementById('loginPassword').value }) })
+        .then(r => r.json()).then(res => { 
+            if (res.status === 'success') { localStorage.setItem('sesiPortalNCIPS', JSON.stringify(res)); tampilkanDashboard(res); } 
+            else { SwalMin.fire({title: 'Gagal', text: res.pesan, icon: 'error'}); btn.innerHTML = 'Masuk Aplikasi'; btn.disabled = false; } 
         })
         .catch(err => {
-            // INI ALARM BARUNYA MAS BRO!
-            SwalMin.fire({title: 'Error Server', text: 'Akses ke Google ditolak. Pastikan akses Deploy adalah "Siapa Saja" (Anyone).', icon: 'error'});
-            btn.innerHTML = 'Masuk Aplikasi'; 
-            btn.disabled = false;
+            // INI ALARM ANTI-MACETNYA MAS BRO!
+            SwalMin.fire({title: 'Koneksi Terputus', text: 'Gagal menghubungi Server Google. Pastikan Akses Deploy diatur ke "Siapa Saja (Anyone)".', icon: 'error', width: '320px'}); 
+            btn.innerHTML = 'Masuk Aplikasi'; btn.disabled = false;
         }); 
     });
     
