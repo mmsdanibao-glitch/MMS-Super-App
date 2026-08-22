@@ -6,6 +6,9 @@
   <title>Portal Terpadu NCIPS</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <!-- SUNTIKAN KEJUTAN: SWEETALERT2 UNTUK POP-UP MODERN -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
   <style>
     :root { --warna-tema: #8B0000; }
     body { background-color: #f8f9fc; font-family: 'Segoe UI', system-ui, sans-serif; touch-action: pan-y; overflow-x: hidden; }
@@ -17,12 +20,19 @@
     .input-login { border-radius: 12px; box-shadow: inset 2px 2px 5px rgba(0,0,0,0.05); border: 1px solid #e0e0e0; padding: 12px 15px; font-size: 0.95rem; }
     .form-label { font-weight: 700; font-size: 0.8rem; color: #6c757d; margin-bottom: 5px; text-transform: uppercase; }
     #halamanDashboard, #halamanModul { display: none; }
+    
+    /* PERBAIKAN HEADER AGAR KELUAR TIDAK TURUN KE BAWAH */
     .header-curve { background: linear-gradient(135deg, var(--warna-tema) 0%, color-mix(in srgb, var(--warna-tema) 60%, black) 100%); padding: 25px 20px 60px 20px; border-bottom-left-radius: 35px; border-bottom-right-radius: 35px; color: white; position: relative; box-shadow: 0 10px 25px color-mix(in srgb, var(--warna-tema) 40%, transparent); }
+    .header-content { display: flex; flex-direction: row; justify-content: space-between; align-items: center; width: 100%; flex-wrap: nowrap; }
+    .btn-logout { margin-left: auto; white-space: nowrap; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 50px; padding: 6px 16px; font-size: 0.85rem; backdrop-filter: blur(5px); transition: 0.3s; }
+    .btn-logout:active { background: rgba(255,255,255,0.4); }
+    
     .overlap-content { margin-top: -35px; padding: 0 20px; position: relative; z-index: 10; }
     .profile-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 12px 30px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; }
     .avatar-circle { width: 50px; height: 50px; border-radius: 50%; background: color-mix(in srgb, var(--warna-tema) 15%, transparent); color: var(--warna-tema); font-size: 1.4rem; font-weight: bold; display: flex; align-items: center; justify-content: center; }
     .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; padding-bottom: 40px; }
-    .menu-card { background: #f8f9fc; border-radius: 22px; text-align: center; padding: 25px 12px; box-shadow: 5px 5px 12px rgba(0,0,0,0.08), -5px -5px 12px rgba(255,255,255,1); cursor: pointer; border: 1px solid rgba(255,255,255,0.5); }
+    .menu-card { background: #f8f9fc; border-radius: 22px; text-align: center; padding: 25px 12px; box-shadow: 5px 5px 12px rgba(0,0,0,0.08), -5px -5px 12px rgba(255,255,255,1); cursor: pointer; border: 1px solid rgba(255,255,255,0.5); transition: 0.2s; }
+    .menu-card:active { transform: scale(0.95); }
     .menu-icon-wrap { width: 65px; height: 65px; background: color-mix(in srgb, var(--warna-tema) 10%, transparent); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto; font-size: 2rem; color: var(--warna-tema); }
     .modul-header { background: var(--warna-tema); color: white; padding: 20px 15px; display: flex; align-items: center; gap: 15px; position: sticky; top: 0; z-index: 100; }
     .btn-back { background: none; border: none; color: white; font-size: 1.5rem; padding: 0; }
@@ -33,39 +43,93 @@
     .modal-content-custom { background: white; width: 90%; max-width: 400px; border-radius: 24px; padding: 25px; text-align: center; }
     .invoice-card { background: white; border-radius: 16px; border-left: 5px solid var(--warna-tema); padding: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
     .invoice-card.lunas { border-left-color: #198754; }
+    
+    /* STYLING KHUSUS SWEETALERT AGAR MATCHING */
+    .swal2-styled.swal2-confirm { background-color: var(--warna-tema) !important; font-weight: bold; border-radius: 10px !important; }
+    .swal2-styled.swal2-cancel { border-radius: 10px !important; }
+    
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
 <body>
 
-  <!-- LOGIN & DASHBOARD -->
+  <!-- LOGIN -->
   <div id="halamanLogin">
-    <div class="login-card" id="formCardLogin"><div class="text-center"><h3 class="fw-bold mb-1" style="color: var(--warna-tema);">Portal NCIPS</h3><p class="text-muted small mb-4">Selamat datang kembali</p></div><form id="formLoginUtama"><input type="email" class="form-control input-login mb-3" id="loginEmail" required placeholder="Email Terdaftar"><input type="password" class="form-control input-login mb-2" id="loginPassword" required placeholder="Kata Sandi"><button type="submit" id="btnLogin" class="btn-emboss mb-3 mt-4">Masuk Aplikasi</button><p class="text-center small text-muted">Belum punya akun? <a class="link-aksi" onclick="gantiLayar('register')">Daftar Akun Baru</a></p></form></div>
-    <div class="login-card" id="formCardRegister" style="display: none;"><div class="text-center"><h4 class="fw-bold mb-1" style="color: var(--warna-tema);">Daftar Akun</h4></div><form id="formRegisterUtama"><input type="text" class="form-control input-login mb-3" id="regNama" required placeholder="Nama Lengkap"><input type="email" class="form-control input-login mb-3" id="regEmail" required placeholder="Email Aktif"><input type="password" class="form-control input-login mb-4" id="regPassword" required minlength="6" placeholder="Buat Kata Sandi"><button type="submit" id="btnRegister" class="btn-emboss mb-3">Buat Akun</button><p class="text-center small text-muted"><a class="link-aksi" onclick="gantiLayar('login')">Batal</a></p></form></div>
-    <div class="login-card" id="formCardOTP" style="display: none;"><div class="text-center"><h4 class="fw-bold mb-1" style="color: var(--warna-tema);">Cek Email</h4></div><form id="formOTPUtama"><input type="number" class="form-control input-login mb-4 text-center fw-bold fs-4" id="otpKode" required placeholder="• • • • • •" style="letter-spacing: 10px;"><button type="submit" id="btnOTP" class="btn-emboss mb-3">Verifikasi</button></form></div>
+    <div class="login-card" id="formCardLogin">
+      <div class="text-center"><h3 class="fw-bold mb-1" style="color: var(--warna-tema);">Portal NCIPS</h3><p class="text-muted small mb-4">Selamat datang kembali</p></div>
+      <form id="formLoginUtama">
+        <input type="email" class="form-control input-login mb-3" id="loginEmail" required placeholder="Email Terdaftar">
+        <input type="password" class="form-control input-login mb-2" id="loginPassword" required placeholder="Kata Sandi">
+        <button type="submit" id="btnLogin" class="btn-emboss mb-3 mt-4">Masuk Aplikasi</button>
+        <p class="text-center small text-muted">Belum punya akun? <a class="link-aksi" onclick="gantiLayar('register')">Daftar Akun Baru</a></p>
+      </form>
+    </div>
+    <div class="login-card" id="formCardRegister" style="display: none;">
+      <div class="text-center"><h4 class="fw-bold mb-1" style="color: var(--warna-tema);">Daftar Akun</h4></div>
+      <form id="formRegisterUtama">
+        <input type="text" class="form-control input-login mb-3" id="regNama" required placeholder="Nama Lengkap">
+        <input type="email" class="form-control input-login mb-3" id="regEmail" required placeholder="Email Aktif">
+        <input type="password" class="form-control input-login mb-4" id="regPassword" required minlength="6" placeholder="Buat Kata Sandi">
+        <button type="submit" id="btnRegister" class="btn-emboss mb-3">Buat Akun</button>
+        <p class="text-center small text-muted"><a class="link-aksi" onclick="gantiLayar('login')">Batal</a></p>
+      </form>
+    </div>
+    <div class="login-card" id="formCardOTP" style="display: none;">
+      <div class="text-center"><h4 class="fw-bold mb-1" style="color: var(--warna-tema);">Cek Email</h4></div>
+      <form id="formOTPUtama">
+        <input type="number" class="form-control input-login mb-4 text-center fw-bold fs-4" id="otpKode" required placeholder="• • • • • •" style="letter-spacing: 10px;">
+        <button type="submit" id="btnOTP" class="btn-emboss mb-3">Verifikasi</button>
+      </form>
+    </div>
   </div>
 
+  <!-- DASHBOARD -->
   <div id="halamanDashboard">
-    <div class="header-curve"><div class="header-content"><div class="fw-bold fs-5" id="namaSekolahNav"><i class="bi bi-buildings me-2"></i>Nama Sekolah</div><button class="btn-logout" onclick="logout()" style="background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 50px; padding: 6px 16px;">Keluar</button></div></div>
-    <div class="overlap-content"><div class="profile-card"><div class="profile-left"><div class="avatar-circle" id="avatarInisial">A</div><div><p class="text-muted small mb-1">Selamat datang,</p><h5 class="fw-bold mb-0" id="namaUserLengkap" style="color: var(--warna-tema);">Nama User</h5></div></div><span class="badge" id="roleUser" style="background-color: var(--warna-tema); padding: 8px 12px; border-radius: 8px;">Role</span></div><div class="menu-grid" id="areaMenu"></div></div>
+    <div class="header-curve">
+      <div class="header-content">
+         <div class="fw-bold fs-5 text-truncate" id="namaSekolahNav"><i class="bi bi-buildings me-2"></i>Nama Sekolah</div>
+         <button class="btn-logout shadow-sm" onclick="logout()"><i class="bi bi-box-arrow-right me-1"></i> Keluar</button>
+      </div>
+    </div>
+    <div class="overlap-content">
+      <div class="profile-card">
+        <div class="profile-left"><div class="avatar-circle" id="avatarInisial">A</div><div><p class="text-muted small mb-1">Selamat datang,</p><h5 class="fw-bold mb-0" id="namaUserLengkap" style="color: var(--warna-tema);">Nama User</h5></div></div>
+        <span class="badge shadow-sm" id="roleUser" style="background-color: var(--warna-tema); padding: 8px 12px; border-radius: 8px;">Role</span>
+      </div>
+      <div class="menu-grid" id="areaMenu"></div>
+    </div>
   </div>
 
-  <!-- HALAMAN MODUL -->
+  <!-- MODUL -->
   <div id="halamanModul">
-    <div class="modul-header"><button class="btn-back" onclick="tutupModul()"><i class="bi bi-arrow-left-short"></i></button><h1 class="modul-title fs-5 mb-0" id="judulModul">Judul Modul</h1></div>
+    <div class="modul-header">
+      <button class="btn-back" onclick="tutupModul()"><i class="bi bi-arrow-left-short"></i></button>
+      <h1 class="modul-title fs-5 mb-0" id="judulModul">Judul Modul</h1>
+    </div>
     
-    <!-- MODULES LAMA DISINI -->
+    <!-- 1. PPDB & Tracker -->
     <div id="areaFormPPDB" style="display: none; padding: 20px;"><p class="text-muted text-center mt-5">Form PPDB disembunyikan agar fokus pada Keuangan.</p></div>
     <div id="areaTrackerStatus" style="display: none; padding: 20px;"><div id="listTrackerContainer"></div></div>
     <div id="areaMejaVerifikasi" style="display: none; padding: 20px;"><div id="listAdminContainer"></div></div>
-    <div id="areaKeuangan" style="display: none; padding: 20px;"><p class="text-muted small mb-3">Pilih nama anak Anda.</p><div class="mb-4"><select class="form-select form-select-lg fw-bold border-primary shadow-sm" id="pilihAnakKeuangan" onchange="tarikTagihan()"><option value="">-- Pilih Anak --</option></select></div><div id="listTagihanContainer"></div></div>
-    <div id="areaKasirKeuangan" style="display: none; padding: 20px;"><div class="alert alert-info border-0 shadow-sm rounded-4"><h6 class="fw-bold mb-1"><i class="bi bi-info-circle me-2"></i>Meja Kasir Digital</h6><p class="small mb-0">Tagihan menunggu validasi.</p></div><div id="listKasirContainer"></div></div>
+    
+    <!-- 2. KEUANGAN ORTU -->
+    <div id="areaKeuangan" style="display: none; padding: 20px;">
+      <p class="text-muted small mb-3">Pilih nama anak Anda untuk melihat tagihan aktif.</p>
+      <div class="mb-4"><select class="form-select form-select-lg fw-bold border-primary shadow-sm" id="pilihAnakKeuangan" onchange="tarikTagihan()"><option value="">-- Pilih Anak --</option></select></div>
+      <div id="listTagihanContainer"></div>
+    </div>
 
-    <!-- AREA BARU: BUAT KONTRAK -->
+    <!-- 3. KASIR BENDAHARA -->
+    <div id="areaKasirKeuangan" style="display: none; padding: 20px;">
+      <div class="alert alert-info border-0 shadow-sm rounded-4"><h6 class="fw-bold mb-1"><i class="bi bi-info-circle me-2"></i>Meja Kasir Digital</h6><p class="small mb-0">Tagihan menunggu validasi.</p></div>
+      <div id="listKasirContainer"></div>
+    </div>
+
+    <!-- 4. PEMBUAT KONTRAK (BENDAHARA) -->
     <div id="areaBuatKontrak" style="display: none; padding: 20px;">
       <div class="d-flex justify-content-between align-items-center mb-3">
          <h6 class="fw-bold mb-0"><i class="bi bi-file-earmark-plus text-danger me-2"></i>Buat Tagihan</h6>
-         <button class="btn btn-sm btn-outline-danger fw-bold" onclick="bukaModalTarif()">+ Master Tarif</button>
+         <button class="btn btn-sm btn-outline-danger fw-bold shadow-sm" onclick="bukaModalTarif()">+ Master Tarif</button>
       </div>
       
       <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
@@ -112,35 +176,28 @@
              <div class="col-6"><label class="form-label">Nominal Diskon</label><input type="text" class="form-control input-login" id="inpDiskon" value="0" oninput="formatRupiahInput(this); hitungTotalKontrak()"></div>
           </div>
           
-          <!-- TOTAL KEWAJIBAN & PER TERMIN (FITUR BARU) -->
-          <div class="mb-2">
-             <label class="form-label text-danger">Total Kewajiban (Semua Termin)</label>
-             <input type="text" class="form-control input-login bg-light fw-bold fs-5 text-danger" id="inpTotalKewajiban" readonly>
-          </div>
-          
+          <div class="mb-2"><label class="form-label text-danger">Total Kewajiban (Semua Termin)</label><input type="text" class="form-control input-login bg-light fw-bold fs-5 text-danger" id="inpTotalKewajiban" readonly></div>
           <div class="mb-4" id="areaNominalPerCicilan" style="display: none;">
              <label class="form-label text-warning" style="color: #d97706 !important;">Estimasi Bayar per Termin/Cicilan</label>
              <input type="text" class="form-control input-login bg-light fw-bold fs-6" style="color: #d97706 !important; border-color: #fcd34d;" id="inpNominalPerCicilan" readonly>
              <small class="text-muted" style="font-size: 0.7rem;">*(Mesin akan menyesuaikan sisa recehan pada termin terakhir agar total akurat)*</small>
           </div>
 
-          <button type="submit" id="btnSubmitKontrak" class="btn-emboss mt-2">Ajukan Tagihan</button>
+          <button type="submit" id="btnSubmitKontrak" class="btn-emboss mt-2 shadow-sm">Ajukan Tagihan</button>
         </form>
       </div>
     </div>
 
-    <!-- AREA BARU: TAB KHUSUS EDIT DISKON + PENCARIAN -->
+    <!-- AREA EDIT DISKON KHUSUS -->
     <div id="areaEditDiskon" style="display: none; padding: 20px;">
        <div class="alert alert-warning border-0 shadow-sm rounded-4 mb-4">
           <h6 class="fw-bold mb-1 text-dark"><i class="bi bi-tags text-warning me-2"></i>Edit Diskon Khusus</h6>
-          <p class="small mb-0 text-muted">Cari siswa dari daftar massal yang telah diajukan, lalu edit nominal diskon khusus/beasiswa mereka sebelum disahkan oleh Yayasan.</p>
+          <p class="small mb-0 text-muted">Cari siswa dari daftar massal yang telah diajukan, lalu edit nominal diskon khusus mereka sebelum disahkan Yayasan.</p>
        </div>
-       
        <div class="input-group mb-4 shadow-sm" style="border-radius: 12px; overflow: hidden;">
           <span class="input-group-text bg-white border-0"><i class="bi bi-search text-muted"></i></span>
           <input type="text" class="form-control border-0 py-3" id="cariDiskon" onkeyup="filterEditDiskon()" placeholder="Cari nama siswa atau kelas...">
        </div>
-
        <div id="listEditDiskonContainer"></div>
     </div>
 
@@ -162,7 +219,7 @@
     </div>
   </div>
 
-  <!-- MODAL BUKTI TRANSFER & PESAN -->
+  <!-- MODAL BUKTI TRANSFER & PESAN (TIDAK DIGUNAKAN LAGI, DIGANTI SWEETALERT, TAPI TETAP UNTUK BUKTI TRANSFER) -->
   <div class="modal-overlay-custom" id="modalUploadTF">
     <div class="modal-content-custom">
       <h5 class="fw-bold text-dark mb-1">Konfirmasi Pembayaran</h5>
@@ -175,26 +232,54 @@
     </div>
   </div>
 
-  <div class="modal-overlay-custom" id="modalPesanUmum"><div class="modal-content-custom"><div class="mb-3" id="ikonPesanUmum" style="font-size: 3rem;"></div><h5 class="fw-bold text-dark" id="judulPesanUmum">Judul</h5><p class="text-muted small mb-4" id="isiPesanUmum">Isi pesan.</p><button class="btn-emboss w-100" onclick="document.getElementById('modalPesanUmum').style.display='none';">Mengerti</button></div></div>
-
   <script>
     let dataUserGlobal = null; let emailSedangDaftar = ""; let dataAnakOrtu = []; let dataSemuaSiswa = []; let dataMasterTarif = [];
     
-    // =================================================================
-    // MASUKKAN URL DEPLOY APPS SCRIPT DI SINI!
-    // =================================================================
+    // API SAKTI MAS BRO (JANGAN LUPA SESUAIKAN DENGAN DEPLOY TERBARU)
     const API_URL = "https://script.google.com/macros/s/AKfycbylQ9H01zpU-NP5B_yqUgyWMGPD_ECdvnFT7SS_iUUWDhKNMfSJOxFwGSGpDekvt9KjWw/exec";
 
     function gantiLayar(t) { document.querySelectorAll('.login-card').forEach(e => e.style.display = 'none'); document.getElementById(t === 'login' ? 'formCardLogin' : t === 'register' ? 'formCardRegister' : 'formCardOTP').style.display = 'block'; }
-    function tampilkanPesan(j, p, t) { document.getElementById('judulPesanUmum').innerText = j; document.getElementById('isiPesanUmum').innerText = p; document.getElementById('ikonPesanUmum').innerHTML = t === 'success' ? '<i class="bi bi-check-circle-fill text-success"></i>' : '<i class="bi bi-exclamation-octagon-fill text-danger"></i>'; document.getElementById('modalPesanUmum').style.display = 'flex'; }
     function rupiah(angka) { return "Rp " + parseInt(angka).toLocaleString('id-ID'); }
     function unformatRupiah(val) { if(!val) return 0; return parseInt(val.toString().replace(/\./g, '')) || 0; }
     function formatRupiahInput(elem) { let val = elem.value.replace(/[^0-9]/g, ''); if(val === "") { elem.value = ""; return; } elem.value = parseInt(val, 10).toLocaleString('id-ID'); }
     
     window.addEventListener('DOMContentLoaded', () => { const sesi = localStorage.getItem('sesiPortalNCIPS'); if (sesi) tampilkanDashboard(JSON.parse(sesi)); });
     
-    document.getElementById('formLoginUtama').addEventListener('submit', function(e) { e.preventDefault(); const btn = document.getElementById('btnLogin'); btn.innerHTML = 'Memeriksa...'; btn.disabled = true; fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: 'login', email: document.getElementById('loginEmail').value, password: document.getElementById('loginPassword').value }) }).then(r => r.json()).then(res => { if (res.status === 'success') { localStorage.setItem('sesiPortalNCIPS', JSON.stringify(res)); tampilkanDashboard(res); } else { tampilkanPesan("Gagal Masuk", res.pesan, "error"); btn.innerHTML = 'Masuk Aplikasi'; btn.disabled = false; } }); });
-    function logout() { localStorage.removeItem('sesiPortalNCIPS'); window.top.location.reload(); }
+    // LOGIN MENGGUNAKAN SWEETALERT2
+    document.getElementById('formLoginUtama').addEventListener('submit', function(e) { 
+        e.preventDefault(); const btn = document.getElementById('btnLogin'); btn.innerHTML = 'Memeriksa...'; btn.disabled = true; 
+        fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: 'login', email: document.getElementById('loginEmail').value, password: document.getElementById('loginPassword').value }) })
+        .then(r => r.json()).then(res => { 
+            if (res.status === 'success') { localStorage.setItem('sesiPortalNCIPS', JSON.stringify(res)); tampilkanDashboard(res); } 
+            else { Swal.fire('Gagal Masuk', res.pesan, 'error'); btn.innerHTML = 'Masuk Aplikasi'; btn.disabled = false; } 
+        }); 
+    });
+    
+    document.getElementById('formRegisterUtama').addEventListener('submit', function(e) { 
+        e.preventDefault(); const btn = document.getElementById('btnRegister'); btn.innerHTML = 'Memproses...'; btn.disabled = true; const email = document.getElementById('regEmail').value; 
+        fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: 'register_akun', nama: document.getElementById('regNama').value, email: email, password: document.getElementById('regPassword').value }) })
+        .then(r => r.json()).then(res => { 
+            btn.innerHTML = 'Buat Akun'; btn.disabled = false; 
+            if (res.status === 'success') { emailSedangDaftar = email; gantiLayar('otp'); Swal.fire('Terkirim!', 'Cek email Anda untuk OTP.', 'success'); } 
+            else { Swal.fire('Gagal', res.pesan, 'error'); } 
+        }); 
+    });
+    
+    document.getElementById('formOTPUtama').addEventListener('submit', function(e) { 
+        e.preventDefault(); 
+        fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: 'verifikasi_otp', email: emailSedangDaftar, otp: document.getElementById('otpKode').value }) })
+        .then(r => r.json()).then(res => { 
+            if (res.status === 'success') { gantiLayar('login'); Swal.fire('Berhasil!', 'Akun aktif. Silakan masuk.', 'success'); } 
+            else { Swal.fire('Gagal', res.pesan, 'error'); }
+        }); 
+    });
+    
+    function logout() { 
+        Swal.fire({
+            title: 'Keluar Aplikasi?', text: "Sesi Anda akan diakhiri.", icon: 'question',
+            showCancelButton: true, confirmButtonColor: '#8B0000', cancelButtonColor: '#aaa', confirmButtonText: 'Ya, Keluar'
+        }).then((result) => { if (result.isConfirmed) { localStorage.removeItem('sesiPortalNCIPS'); window.top.location.reload(); }});
+    }
 
     function tampilkanDashboard(data) {
       dataUserGlobal = data; document.documentElement.style.setProperty('--warna-tema', data.tenant.warnaTema || '#8B0000');
@@ -204,52 +289,33 @@
 
       let htmlMenu = ''; const role = data.user.role.toLowerCase();
       
-      // 1. KASTA YAYASAN (Petinggi yang cuma ACC dan Pantau)
+      // LOGIKA ROLE YANG SUDAH DIREVISI!
       if (role === 'bendahara yayasan' || role === 'yayasan' || role.includes('ketua yayasan')) {
         htmlMenu += `<div class="menu-card" onclick='bukaModul("meja_yayasan")'><div class="menu-icon-wrap"><i class="bi bi-bank"></i></div><p class="menu-title">ACC Tagihan</p></div>`;
         htmlMenu += `<div class="menu-card" onclick='bukaModul("kasir_keuangan")'><div class="menu-icon-wrap"><i class="bi bi-cash-coin"></i></div><p class="menu-title">Pantau Kasir</p></div>`;
       } 
-      // 2. KASTA BENDAHARA SEKOLAH (Operator Lapangan)
-      else if (role.includes('bendahara')) { 
+      else if (role.includes('bendahara')) {
         htmlMenu += `<div class="menu-card" onclick='bukaModul("verifikasi")'><div class="menu-icon-wrap"><i class="bi bi-ui-checks"></i></div><p class="menu-title">Verifikasi PPDB</p></div>`;
         htmlMenu += `<div class="menu-card" onclick='bukaModul("buat_kontrak")'><div class="menu-icon-wrap"><i class="bi bi-file-earmark-plus"></i></div><p class="menu-title">Buat Tagihan</p></div>`;
         htmlMenu += `<div class="menu-card" onclick='bukaModul("edit_diskon")'><div class="menu-icon-wrap"><i class="bi bi-tags"></i></div><p class="menu-title">Edit Diskon</p></div>`;
         htmlMenu += `<div class="menu-card" onclick='bukaModul("kasir_keuangan")'><div class="menu-icon-wrap"><i class="bi bi-cash-coin"></i></div><p class="menu-title">Kasir Pembayaran</p></div>`;
-      } 
-      // 3. KASTA KEPALA SEKOLAH / ADMIN
-      else if (role.includes('admin') || role.includes('kepala')) {
+      } else if (role.includes('admin') || role.includes('kepala')) {
         htmlMenu += `<div class="menu-card" onclick='bukaModul("verifikasi")'><div class="menu-icon-wrap"><i class="bi bi-ui-checks"></i></div><p class="menu-title">Meja Verifikasi</p></div>`;
         htmlMenu += `<div class="menu-card" onclick='bukaModul("meja_yayasan")'><div class="menu-icon-wrap"><i class="bi bi-bank"></i></div><p class="menu-title">ACC Tagihan</p></div>`;
-      } 
-      // 4. KASTA ORANG TUA SISWA
-      else {
+      } else {
         htmlMenu += `<div class="menu-card" onclick='bukaModul("keuangan")'><div class="menu-icon-wrap"><i class="bi bi-wallet2"></i></div><p class="menu-title">Keuangan & SPP</p></div>`;
       }
-      
       document.getElementById('areaMenu').innerHTML = htmlMenu;
     }
 
     function bukaModul(modulId) {
       document.getElementById('halamanDashboard').style.display = 'none'; document.getElementById('halamanModul').style.display = 'block';
-      
-      // Sembunyikan Semua Area
-      document.getElementById('areaFormPPDB').style.display = 'none'; 
-      document.getElementById('areaTrackerStatus').style.display = 'none'; 
-      document.getElementById('areaMejaVerifikasi').style.display = 'none'; 
-      document.getElementById('areaKeuangan').style.display = 'none'; 
-      document.getElementById('areaKasirKeuangan').style.display = 'none'; 
-      document.getElementById('areaBuatKontrak').style.display = 'none'; 
-      document.getElementById('areaEditDiskon').style.display = 'none'; 
-      document.getElementById('areaMejaYayasan').style.display = 'none';
+      document.getElementById('areaFormPPDB').style.display = 'none'; document.getElementById('areaTrackerStatus').style.display = 'none'; document.getElementById('areaMejaVerifikasi').style.display = 'none'; document.getElementById('areaKeuangan').style.display = 'none'; document.getElementById('areaKasirKeuangan').style.display = 'none'; document.getElementById('areaBuatKontrak').style.display = 'none'; document.getElementById('areaEditDiskon').style.display = 'none'; document.getElementById('areaMejaYayasan').style.display = 'none';
 
-      // Buka Area yang diminta
       if (modulId === 'keuangan') { document.getElementById('judulModul').innerText = "Info Tagihan & SPP"; document.getElementById('areaKeuangan').style.display = 'block'; tarikDataAnakKeuangan(); }
       else if (modulId === 'kasir_keuangan') { document.getElementById('judulModul').innerText = "Kasir Keuangan"; document.getElementById('areaKasirKeuangan').style.display = 'block'; tarikDataKasir(); }
       else if (modulId === 'buat_kontrak') { document.getElementById('judulModul').innerText = "Manajemen Tagihan"; document.getElementById('areaBuatKontrak').style.display = 'block'; persiapanBuatKontrak(); }
-      
-      // LOGIKA BUKA AREA BARU:
       else if (modulId === 'edit_diskon') { document.getElementById('judulModul').innerText = "Edit Diskon Khusus"; document.getElementById('areaEditDiskon').style.display = 'block'; tarikDataEditDiskon(); }
-      
       else if (modulId === 'meja_yayasan') { document.getElementById('judulModul').innerText = "Meja Yayasan"; document.getElementById('areaMejaYayasan').style.display = 'block'; tarikDataYayasan(); }
       else if (modulId === 'verifikasi') { document.getElementById('judulModul').innerText = "Meja Verifikasi"; document.getElementById('areaMejaVerifikasi').style.display = 'block'; }
     }
@@ -258,12 +324,13 @@
     function previewFile(inputId, ikonId, teksId) { const file = document.getElementById(inputId).files[0]; if(file) { document.getElementById(ikonId).className = "bi bi-check-circle-fill fs-3 text-success"; document.getElementById(teksId).innerText = file.name; document.getElementById(teksId).className = "small fw-bold mt-2 mb-0 text-success"; document.getElementById(inputId).parentElement.style.borderColor = "#198754"; } }
     const toBase64 = file => new Promise((resolve, reject) => { if(!file) { resolve(""); return; } const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => resolve(reader.result); reader.onerror = error => reject(error); });
 
-    // ================= KEUANGAN ORTU & KASIR (Singkat) =================
+    // ================= KEUANGAN ORTU & KASIR (SWEETALERT) =================
     function tarikDataAnakKeuangan() {
       let email = dataUserGlobal.user.email; const idTenant = dataUserGlobal.tenant.idDatabase;
       fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: 'get_siswa_ortu', tenantDbId: idTenant, email: email }) })
       .then(r => r.json()).then(res => { if (res.status === 'success') { dataAnakOrtu = res.data; let html = '<option value="">-- Pilih Nama Anak --</option>'; dataAnakOrtu.forEach((a, i) => html += `<option value="${i}">${a.nama}</option>`); document.getElementById('pilihAnakKeuangan').innerHTML = html; } });
     }
+    
     function tarikTagihan() {
        const idx = document.getElementById('pilihAnakKeuangan').value; if(idx==="") return;
        const wadah = document.getElementById('listTagihanContainer'); wadah.innerHTML = `<div class="text-center mt-5"><div class="spinner-border text-primary"></div></div>`;
@@ -273,20 +340,22 @@
              if(res.data.length===0) { wadah.innerHTML = `<div class="text-center mt-5"><p>Tidak ada tagihan aktif.</p></div>`; return; }
              let html = "";
              res.data.forEach(i => {
-                let btn = i.status.includes("Lunas") && i.link_kwitansi!=="-" ? `<a href="${i.link_kwitansi}" target="_blank" class="btn btn-sm btn-success w-100 fw-bold">Unduh Kwitansi</a>` : `<button class="btn btn-sm btn-outline-primary w-100 fw-bold" onclick="bukaModalBayar('${i.id_invoice}', '${i.rincian}')">Upload Bukti Bayar</button>`;
+                let btn = i.status.includes("Lunas") && i.link_kwitansi!=="-" ? `<a href="${i.link_kwitansi}" target="_blank" class="btn btn-sm btn-success w-100 fw-bold"><i class="bi bi-download"></i> Unduh Kwitansi</a>` : `<button class="btn btn-sm btn-outline-primary w-100 fw-bold shadow-sm" onclick="bukaModalBayar('${i.id_invoice}', '${i.rincian}')"><i class="bi bi-upload"></i> Upload Bukti Bayar</button>`;
                 html += `<div class="invoice-card ${i.status.includes("Lunas")?"lunas":""}"><div class="d-flex justify-content-between mb-2"><div><h6 class="fw-bold mb-0">${i.rincian}</h6><small class="text-muted">Batas: ${i.batas_waktu}</small></div><span class="badge bg-warning text-dark">${i.status}</span></div><p class="mb-2 fw-bold text-danger">${rupiah(i.sisa_tagihan)}</p>${btn}</div>`;
              }); wadah.innerHTML = html;
-          }
+          } else { Swal.fire('Error', res.pesan, 'error'); }
        });
     }
+
     function bukaModalBayar(id, rin) { document.getElementById('idInvoiceTerpilih').value=id; document.getElementById('lblRincianBayar').innerText=rin; document.getElementById('modalUploadTF').style.display='flex'; }
     document.getElementById('formBayarTagihan').addEventListener('submit', async function(e) {
        e.preventDefault(); const btn = document.getElementById('btnSubmitTF'); btn.innerHTML='Mengirim...'; btn.disabled=true;
-       try { const base64 = await toBase64(document.getElementById('fileBuktiTF').files[0]);
+       try { 
+          const base64 = await toBase64(document.getElementById('fileBuktiTF').files[0]);
           const res = await fetch(API_URL, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({action:'bayar_tagihan', idDbFinance:dataUserGlobal.tenant.idDbFinance, idFolderFinance:dataUserGlobal.tenant.idFolderFinance, idInvoice:document.getElementById('idInvoiceTerpilih').value, fileBukti:base64})}).then(r=>r.json());
           btn.innerHTML='Kirim Bukti'; btn.disabled=false;
-          if(res.status==='success') { document.getElementById('modalUploadTF').style.display='none'; alert("Bukti terkirim!"); tarikTagihan(); }
-       } catch(err) { alert(err.message); btn.disabled=false; }
+          if(res.status==='success') { document.getElementById('modalUploadTF').style.display='none'; Swal.fire('Berhasil!', 'Bukti berhasil terkirim ke sistem.', 'success'); tarikTagihan(); }
+       } catch(err) { Swal.fire('Error', err.message, 'error'); btn.disabled=false; }
     });
 
     function tarikDataKasir() {
@@ -294,46 +363,44 @@
       fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: 'get_admin_keuangan', idDbFinance: dataUserGlobal.tenant.idDbFinance }) })
       .then(r=>r.json()).then(res=>{
          if(res.status==='success') {
-            if(res.data.length===0) { wadah.innerHTML = `<div class="text-center mt-5"><p>Belum ada bukti bayar masuk.</p></div>`; return; }
+            if(res.data.length===0) { wadah.innerHTML = `<div class="text-center mt-5 text-muted"><p>Belum ada bukti bayar baru.</p></div>`; return; }
             let html = "";
             res.data.forEach(item => {
-               html += `<div class="tracker-card border-success border-2 shadow-sm"><div class="d-flex justify-content-between mb-2"><div><h6 class="fw-bold mb-0">${item.nama}</h6><small>${item.rincian}</small></div><div class="text-end fw-bold text-success">${rupiah(item.total)}</div></div><a href="${item.link_bukti}" target="_blank" class="btn btn-sm btn-outline-primary mb-2 w-100">Cek Bukti Transfer</a><button class="btn btn-success w-100 fw-bold" onclick="validasiPembayaran('${item.id_invoice}')">Validasi & Cetak Kwitansi</button></div>`;
+               html += `<div class="tracker-card border-success border-2 shadow-sm"><div class="d-flex justify-content-between mb-2"><div><h6 class="fw-bold mb-0">${item.nama}</h6><small>${item.rincian}</small></div><div class="text-end fw-bold text-success">${rupiah(item.total)}</div></div><a href="${item.link_bukti}" target="_blank" class="btn btn-sm btn-outline-primary mb-2 w-100 shadow-sm"><i class="bi bi-search"></i> Cek Bukti Transfer</a><button class="btn btn-success w-100 fw-bold shadow-sm" onclick="validasiPembayaran('${item.id_invoice}')"><i class="bi bi-check-circle-fill"></i> Validasi & Cetak Kwitansi</button></div>`;
             }); wadah.innerHTML = html;
          }
       });
     }
+
     function validasiPembayaran(id) {
-       if(confirm("Validasi pembayaran & cetak E-Kwitansi?")) {
-          tampilkanPesan("Memproses", "Mencetak PDF...", "success");
-          fetch(API_URL, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({action:'verifikasi_pembayaran', idDbFinance:dataUserGlobal.tenant.idDbFinance, idFolderFinance:dataUserGlobal.tenant.idFolderFinance, idInvoice:id})})
-          .then(r=>r.json()).then(res=>{ document.getElementById('modalPesanUmum').style.display='none'; if(res.status==='success'){ alert(res.pesan); tarikDataKasir(); } });
-       }
+       Swal.fire({
+         title: 'Validasi Pembayaran?', text: "E-Kwitansi ber-QR Code akan diterbitkan.", icon: 'question',
+         showCancelButton: true, confirmButtonColor: '#198754', confirmButtonText: 'Ya, Validasi!'
+       }).then((result) => {
+         if (result.isConfirmed) {
+            Swal.fire({title: 'Mencetak PDF...', allowOutsideClick: false, didOpen: () => {Swal.showLoading()}});
+            fetch(API_URL, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({action:'verifikasi_pembayaran', idDbFinance:dataUserGlobal.tenant.idDbFinance, idFolderFinance:dataUserGlobal.tenant.idFolderFinance, idInvoice:id})})
+            .then(r=>r.json()).then(res=>{ if(res.status==='success'){ Swal.fire('Sukses!', res.pesan, 'success'); tarikDataKasir(); } else { Swal.fire('Gagal', res.pesan, 'error'); } });
+         }
+       });
     }
 
-    // ================= PENGATURAN WAKTU, CICILAN & BUAT KONTRAK =================
+    // ================= PENGATURAN WAKTU & BUAT KONTRAK =================
     function cekFrekuensi() {
         const frek = document.getElementById('selFrekuensiTagihan').value;
         const areaCicil = document.getElementById('areaJumlahCicilan');
         const areaNominalPer = document.getElementById('areaNominalPerCicilan');
         
-        if (frek === "Cicilan Khusus") {
-            areaCicil.style.display = "block";
-            areaNominalPer.style.display = "block"; // Munculkan field Kewajiban per Termin
-        } else {
-            areaCicil.style.display = "none";
-            areaNominalPer.style.display = "none";
-        }
+        if (frek === "Cicilan Khusus") { areaCicil.style.display = "block"; areaNominalPer.style.display = "block"; } 
+        else { areaCicil.style.display = "none"; areaNominalPer.style.display = "none"; }
         hitungTotalKontrak();
     }
 
     async function persiapanBuatKontrak() {
         const idTenant = dataUserGlobal.tenant.idDatabase; const idFin = dataUserGlobal.tenant.idDbFinance;
         document.getElementById('btnSubmitKontrak').disabled = true; document.getElementById('btnSubmitKontrak').innerHTML = 'Memuat Data...';
-        
-        // Auto-set kalender
         document.getElementById('inpTglMulai').value = new Date().toISOString().split('T')[0];
-        let blnDepan = new Date(); blnDepan.setMonth(blnDepan.getMonth() + 1);
-        document.getElementById('inpTglAkhir').value = blnDepan.toISOString().split('T')[0];
+        let blnDepan = new Date(); blnDepan.setMonth(blnDepan.getMonth() + 1); document.getElementById('inpTglAkhir').value = blnDepan.toISOString().split('T')[0];
 
         try {
             const [resSiswa, resTarif] = await Promise.all([
@@ -360,8 +427,7 @@
                 document.getElementById('selTarifKontrak').innerHTML = optTarif;
             }
             document.getElementById('btnSubmitKontrak').disabled = false; document.getElementById('btnSubmitKontrak').innerHTML = 'Ajukan Tagihan';
-            
-        } catch(e) { alert("Gagal memuat data."); }
+        } catch(e) { Swal.fire('Error', "Gagal memuat data", 'error'); }
     }
     
     function cekModeMassal() {
@@ -373,23 +439,15 @@
 
     function hitungTotalKontrak() {
         const idxTarif = document.getElementById('selTarifKontrak').value;
-        if(idxTarif === "") {
-             document.getElementById('inpNominalStandar').value = ""; 
-             document.getElementById('inpTotalKewajiban').value = ""; 
-             document.getElementById('inpNominalPerCicilan').value = ""; 
-             return; 
-        }
+        if(idxTarif === "") { document.getElementById('inpNominalStandar').value = ""; document.getElementById('inpTotalKewajiban').value = ""; document.getElementById('inpNominalPerCicilan').value = ""; return; }
         const nominalMentah = parseInt(dataMasterTarif[idxTarif].nominal) || 0; 
         document.getElementById('inpNominalStandar').value = nominalMentah.toLocaleString('id-ID');
         
         let diskonMentah = unformatRupiah(document.getElementById('inpDiskon').value); 
         let total = nominalMentah - diskonMentah;
         if (total < 0) total = 0;
-        
-        // Update Kolom Total Kewajiban
         document.getElementById('inpTotalKewajiban').value = total.toLocaleString('id-ID');
         
-        // HITUNG KEWAJIBAN PER TERMIN JIKA FREKUENSI ADALAH CICILAN
         const frek = document.getElementById('selFrekuensiTagihan').value;
         if (frek === "Cicilan Khusus") {
             let jmlCicilan = parseInt(document.getElementById('inpJumlahCicilan').value) || 1;
@@ -402,7 +460,7 @@
     document.getElementById('formBuatKontrak').addEventListener('submit', function(e){
         e.preventDefault();
         const idxSiswa = document.getElementById('selSiswaKontrak').value; const idxTarif = document.getElementById('selTarifKontrak').value;
-        if(idxSiswa==="" || idxTarif==="") return alert("Pilih Target dan Tarif!");
+        if(idxSiswa==="" || idxTarif==="") return Swal.fire('Oops', 'Pilih Target dan Tarif!', 'warning');
         
         const payloadDasar = {
             kategori: dataMasterTarif[idxTarif].kategori, nominalStandar: dataMasterTarif[idxTarif].nominal, 
@@ -425,9 +483,9 @@
         .then(r=>r.json()).then(res=>{ 
             btn.disabled=false; btn.innerHTML='Ajukan Tagihan'; 
             if(res.status==='success') { 
-                alert(res.pesan + "\n\nSilakan cek Menu 'Edit Diskon' jika ingin mengatur beasiswa perorangan."); 
+                Swal.fire('Berhasil Terkirim!', res.pesan + '<br><br><small>Buka menu <b>Edit Diskon</b> untuk mengatur beasiswa perorangan.</small>', 'success'); 
                 document.getElementById('formBuatKontrak').reset(); 
-            } else alert(res.pesan); 
+            } else Swal.fire('Gagal', res.pesan, 'error'); 
         });
     });
 
@@ -437,13 +495,17 @@
         e.preventDefault(); const btn = document.getElementById('btnSimpanTarif'); btn.innerHTML = 'Menyimpan...'; btn.disabled = true;
         const payload = { kategori: document.getElementById('inpKategoriTarif').value, frekuensi: document.getElementById('inpFrekuensiTarif').value, nominal: unformatRupiah(document.getElementById('inpNominalTarif').value), keterangan: document.getElementById('inpKetTarif').value };
         fetch(API_URL, { method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify({action: 'tambah_master_tarif', idDbFinance: dataUserGlobal.tenant.idDbFinance, data: payload})
-        }).then(r => r.json()).then(res => { btn.innerHTML = 'Simpan Tarif'; btn.disabled = false; if(res.status === 'success') { document.getElementById('modalTambahTarif').style.display = 'none'; alert(res.pesan); persiapanBuatKontrak(); } });
+        }).then(r => r.json()).then(res => { 
+            btn.innerHTML = 'Simpan Tarif'; btn.disabled = false; 
+            if(res.status === 'success') { document.getElementById('modalTambahTarif').style.display = 'none'; Swal.fire('Berhasil', res.pesan, 'success'); persiapanBuatKontrak(); } 
+            else { Swal.fire('Gagal', res.pesan, 'error'); }
+        });
     });
 
-    // ================= TAB KHUSUS: EDIT DISKON & PENCARIAN =================
+    // ================= EDIT DISKON & PENCARIAN =================
     function tarikDataEditDiskon() {
         const wadah = document.getElementById('listEditDiskonContainer'); wadah.innerHTML = `<div class="text-center mt-3"><div class="spinner-border text-warning spinner-border-sm"></div></div>`;
-        document.getElementById('cariDiskon').value = ""; // Reset form pencarian
+        document.getElementById('cariDiskon').value = "";
         
         fetch(API_URL, { method: "POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({ action: 'get_pending_kontrak', idDbFinance: dataUserGlobal.tenant.idDbFinance }) })
         .then(r=>r.json()).then(res=>{
@@ -451,22 +513,21 @@
                 if(res.data.length===0) { wadah.innerHTML = `<p class="text-center mt-2 small text-muted">Belum ada tagihan yang diajukan ke Yayasan.</p>`; return; }
                 let html = "";
                 res.data.forEach(item => {
-                    // Tambahkan class 'card-diskon-item' agar mudah dicari oleh JS
                     html += `
                     <div class="card border-0 shadow-sm mb-3 p-3 rounded-4 bg-white card-diskon-item">
                         <div class="d-flex justify-content-between mb-2">
-                            <div><h6 class="fw-bold mb-0 nama-siswa">${item.nama}</h6><small class="text-muted">${item.kategori}</small></div>
+                            <div><h6 class="fw-bold mb-0">${item.nama}</h6><small class="text-muted">${item.kategori}</small></div>
                             <div class="text-end fw-bold text-danger">${rupiah(item.total)}<br><small class="text-muted fw-normal"><del>${rupiah(item.nominal_standar)}</del></small></div>
                         </div>
                         <label class="small fw-bold text-muted mt-2">Edit Diskon Khusus:</label>
-                        <div class="input-group input-group-sm mt-1">
-                            <select class="form-select" id="editKeringanan_${item.id_kontrak}">
+                        <div class="input-group input-group-sm mt-1 shadow-sm">
+                            <select class="form-select border-warning" id="editKeringanan_${item.id_kontrak}">
                                 <option value="Tidak Ada" ${item.keringanan === 'Tidak Ada' ? 'selected' : ''}>Tidak Ada</option>
                                 <option value="Beasiswa Yayasan" ${item.keringanan === 'Beasiswa Yayasan' ? 'selected' : ''}>Beasiswa Yayasan</option>
                                 <option value="Yatim Piatu" ${item.keringanan === 'Yatim Piatu' ? 'selected' : ''}>Yatim Piatu</option>
                                 <option value="Diskon Khusus" ${item.keringanan === 'Diskon Khusus' ? 'selected' : ''}>Diskon Khusus</option>
                             </select>
-                            <input type="text" class="form-control" id="editDiskon_${item.id_kontrak}" value="${parseInt(item.diskon).toLocaleString('id-ID')}" oninput="formatRupiahInput(this)">
+                            <input type="text" class="form-control border-warning" id="editDiskon_${item.id_kontrak}" value="${parseInt(item.diskon).toLocaleString('id-ID')}" oninput="formatRupiahInput(this)">
                             <button class="btn btn-warning fw-bold text-dark" onclick="simpanEditDiskon('${item.id_kontrak}')"><i class="bi bi-check2"></i> Simpan</button>
                         </div>
                     </div>`;
@@ -476,18 +537,12 @@
         });
     }
 
-    // FUNGSI PENCARIAN (SEARCH) REAL-TIME
     function filterEditDiskon() {
         let input = document.getElementById('cariDiskon').value.toLowerCase();
         let cards = document.getElementsByClassName('card-diskon-item');
-        
         for (let i = 0; i < cards.length; i++) {
-            let textKandungan = cards[i].innerText.toLowerCase();
-            if (textKandungan.includes(input)) {
-                cards[i].style.display = ""; // Tampilkan
-            } else {
-                cards[i].style.display = "none"; // Sembunyikan
-            }
+            if (cards[i].innerText.toLowerCase().includes(input)) cards[i].style.display = ""; 
+            else cards[i].style.display = "none";
         }
     }
 
@@ -495,89 +550,85 @@
         const keringanan = document.getElementById(`editKeringanan_${idKontrak}`).value; 
         const diskon = unformatRupiah(document.getElementById(`editDiskon_${idKontrak}`).value);
         fetch(API_URL, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({action:'update_diskon', idDbFinance: dataUserGlobal.tenant.idDbFinance, idKontrak: idKontrak, keringanan: keringanan, diskon: diskon})
-        }).then(r=>r.json()).then(res=>{ if(res.status==='success') { tampilkanPesan("Berhasil!", "Diskon berhasil diupdate.", "success"); tarikDataEditDiskon(); } else alert("Gagal: "+res.pesan); });
+        }).then(r=>r.json()).then(res=>{ if(res.status==='success') { Swal.fire("Tersimpan!", "Diskon berhasil diupdate.", "success"); tarikDataEditDiskon(); } else Swal.fire("Gagal", res.pesan, "error"); });
     }
-// ================= MEJA YAYASAN (DENGAN FITUR MASSAL) =================
-    
-    // Variabel penampung keranjang massal
+
+    // ================= MEJA YAYASAN (DENGAN SWEETALERT & PENOLAKAN ALASAN) =================
     let globalPendingKontrakIDs = [];
 
     function tarikDataYayasan() {
-        const wadah = document.getElementById('listYayasanContainer'); 
-        wadah.innerHTML = `<div class="text-center mt-5"><div class="spinner-border text-danger"></div></div>`;
-        
+        const wadah = document.getElementById('listYayasanContainer'); wadah.innerHTML = `<div class="text-center mt-5"><div class="spinner-border text-danger"></div></div>`;
         fetch(API_URL, { method: "POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({ action: 'get_pending_kontrak', idDbFinance: dataUserGlobal.tenant.idDbFinance }) })
         .then(r=>r.json()).then(res=>{
             if(res.status==='success') {
-                if(res.data.length===0) { wadah.innerHTML = `<p class="text-center mt-4">Tidak ada pengajuan kontrak.</p>`; return; }
+                if(res.data.length===0) { wadah.innerHTML = `<p class="text-center mt-4 text-muted">Tidak ada pengajuan kontrak dari Bendahara.</p>`; return; }
                 
-                globalPendingKontrakIDs = []; // Kosongkan keranjang
-                
-                // Tambahkan Panel Tombol Massal di Atas Daftar
+                globalPendingKontrakIDs = [];
                 let html = `
                 <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-white rounded-4 shadow-sm" style="border: 2px solid #8B0000;">
-                    <div>
-                       <span class="badge bg-danger fs-6">${res.data.length} Kontrak</span>
-                       <div class="small text-muted mt-1">Siap disahkan</div>
-                    </div>
+                    <div><span class="badge bg-danger fs-6">${res.data.length} Kontrak</span><div class="small text-muted mt-1">Siap disahkan</div></div>
                     <button class="btn btn-danger fw-bold shadow-sm" onclick="sahkanMassal()"><i class="bi bi-check2-all me-1"></i> Sahkan Semua</button>
-                </div>
-                `;
+                </div>`;
                 
-                // Render daftarnya ke bawah
                 res.data.forEach(item => {
-                    globalPendingKontrakIDs.push(item.id_kontrak); // Masukkan ID ke keranjang
+                    globalPendingKontrakIDs.push(item.id_kontrak);
                     html += `
                     <div class="tracker-card border-danger border-2 shadow-sm">
                         <div class="d-flex justify-content-between mb-2">
                             <div><span class="badge bg-warning text-dark mb-1">Menunggu Sah</span><h6 class="fw-bold mb-0">${item.nama}</h6><small class="text-muted">${item.kategori}</small></div>
                             <div class="text-end fw-bold text-danger">${rupiah(item.total)}<br><small class="text-muted fw-normal"><del>${rupiah(item.nominal_standar)}</del></small></div>
                         </div>
-                        <div class="bg-light p-2 rounded mb-3 small text-muted"><b>Diskon:</b> Rp ${parseInt(item.diskon).toLocaleString('id-ID')}</div>
+                        <div class="bg-light p-2 rounded mb-3 small text-muted"><b>Diskon:</b> Rp ${parseInt(item.diskon).toLocaleString('id-ID')} (${item.keringanan})</div>
                         <div class="d-flex gap-2">
-                            <button class="btn btn-outline-danger w-50 fw-bold" onclick="hapusTagihan('${item.id_kontrak}')">Tolak</button>
-                            <button class="btn btn-danger w-50 fw-bold" onclick="sahkanTagihan('${item.id_kontrak}')">Sahkan</button>
+                            <button class="btn btn-outline-danger w-50 fw-bold shadow-sm" onclick="hapusTagihan('${item.id_kontrak}')"><i class="bi bi-x-circle"></i> Tolak</button>
+                            <button class="btn btn-danger w-50 fw-bold shadow-sm" onclick="sahkanTagihan('${item.id_kontrak}')"><i class="bi bi-check2"></i> Sahkan</button>
                         </div>
                     </div>`;
-                }); 
-                wadah.innerHTML = html;
+                }); wadah.innerHTML = html;
             }
         });
     }
 
-    // Fungsi Baru: Tembakan Massal Yayasan
     function sahkanMassal() {
-        if(globalPendingKontrakIDs.length === 0) return alert("Tidak ada data untuk disahkan.");
-        
-        if(confirm(`Anda akan mengesahkan ${globalPendingKontrakIDs.length} tagihan SEKALIGUS.\nMesin akan otomatis memecah tagihan ke masing-masing Invoice. Lanjutkan?`)) {
-            tampilkanPesan("Memproses", "Mencetak ratusan Invoice massal. Mohon tunggu...", "success");
-            
-            fetch(API_URL, { 
-                method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, 
-                body:JSON.stringify({action:'sahkan_kontrak_massal', idDbFinance: dataUserGlobal.tenant.idDbFinance, dataArrayId: globalPendingKontrakIDs})
-            })
-            .then(r=>r.json()).then(res=>{ 
-                document.getElementById('modalPesanUmum').style.display='none';
-                if(res.status==='success') { 
-                    alert(res.pesan); 
-                    tarikDataYayasan(); // Refresh layar
-                } else alert("Gagal: "+res.pesan); 
-            });
-        }
+        if(globalPendingKontrakIDs.length === 0) return Swal.fire('Kosong', 'Tidak ada data.', 'info');
+        Swal.fire({
+            title: 'Sahkan Massal?', text: `Anda akan mengesahkan ${globalPendingKontrakIDs.length} tagihan SEKALIGUS. Lanjutkan?`, icon: 'warning',
+            showCancelButton: true, confirmButtonColor: '#8B0000', confirmButtonText: 'Ya, Sahkan Semua!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({title: 'Mencetak Ratusan Invoice...', allowOutsideClick: false, didOpen: () => {Swal.showLoading()}});
+                fetch(API_URL, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({action:'sahkan_kontrak_massal', idDbFinance: dataUserGlobal.tenant.idDbFinance, dataArrayId: globalPendingKontrakIDs}) })
+                .then(r=>r.json()).then(res=>{ if(res.status==='success') { Swal.fire('Selesai!', res.pesan, 'success'); tarikDataYayasan(); } else Swal.fire('Error', res.pesan, 'error'); });
+            }
+        });
     }
 
     function hapusTagihan(id) {
-        if(confirm("Yakin menolak kontrak ini? Data ini akan dihapus dari daftar tunggu.")) { 
-            fetch(API_URL, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({action:'tolak_kontrak', idDbFinance: dataUserGlobal.tenant.idDbFinance, idKontrak: id})})
-            .then(r=>r.json()).then(res=>{ if(res.status==='success') { alert(res.pesan); tarikDataYayasan(); } else alert("Gagal: "+res.pesan); }); 
-        }
+        Swal.fire({
+            title: 'Tolak Kontrak?', text: "Masukkan alasan penolakan (akan dikembalikan ke Bendahara):",
+            input: 'text', inputPlaceholder: 'Contoh: Diskon terlalu besar', icon: 'error', showCancelButton: true,
+            confirmButtonColor: '#8B0000', cancelButtonColor: '#aaa', confirmButtonText: 'Tolak Tagihan'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const alasan = result.value || "Ditolak tanpa keterangan";
+                Swal.fire({title: 'Memproses...', allowOutsideClick: false, didOpen: () => {Swal.showLoading()}});
+                fetch(API_URL, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({action:'tolak_kontrak', idDbFinance: dataUserGlobal.tenant.idDbFinance, idKontrak: id, alasan: alasan})})
+                .then(r=>r.json()).then(res=>{ if(res.status==='success') { Swal.fire('Ditolak!', res.pesan, 'success'); tarikDataYayasan(); } else Swal.fire('Gagal', res.pesan, 'error'); }); 
+            }
+        });
     }
 
     function sahkanTagihan(id) {
-        if(confirm("Sahkan kontrak ini secara individual?")) {
-            fetch(API_URL, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({action:'sahkan_kontrak', idDbFinance: dataUserGlobal.tenant.idDbFinance, idKontrak: id})})
-            .then(r=>r.json()).then(res=>{ if(res.status==='success') { alert(res.pesan); tarikDataYayasan(); } else alert("Gagal: "+res.pesan); });
-        }
+        Swal.fire({
+            title: 'Sahkan Kontrak?', text: "Mesin otomatis memecah tagihan ke Invoice.", icon: 'question',
+            showCancelButton: true, confirmButtonColor: '#198754', confirmButtonText: 'Ya, Sahkan!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({title: 'Memproses...', allowOutsideClick: false, didOpen: () => {Swal.showLoading()}});
+                fetch(API_URL, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({action:'sahkan_kontrak', idDbFinance: dataUserGlobal.tenant.idDbFinance, idKontrak: id})})
+                .then(r=>r.json()).then(res=>{ if(res.status==='success') { Swal.fire('Sukses!', res.pesan, 'success'); tarikDataYayasan(); } else Swal.fire('Gagal', res.pesan, 'error'); });
+            }
+        });
     }
   </script>
 </body>
