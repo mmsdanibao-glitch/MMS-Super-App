@@ -323,24 +323,43 @@
     const toBase64 = file => new Promise((resolve, reject) => { if(!file) { resolve(""); return; } const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => resolve(reader.result); reader.onerror = error => reject(error); });
 
     // ================= KEUANGAN ORTU & KASIR =================
+    function // ================= KEUANGAN ORTU & KASIR =================
     function tarikDataAnakKeuangan() {
       fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: 'get_siswa_ortu', tenantDbId: dataUserGlobal.tenant.idDatabase, email: dataUserGlobal.user.email }) })
-      .then(r => r.json()).then(res => { if (res.status === 'success') { dataAnakOrtu = res.data; let html = '<option value="">-- Pilih Anak --</option>'; dataAnakOrtu.forEach((a, i) => html += `<option value="${i}">${a.nama}</option>`); document.getElementById('pilihAnakKeuangan').innerHTML = html; } });
+      .then(r => r.json()).then(res => { 
+         if (res.status === 'success') { 
+            dataAnakOrtu = res.data; 
+            let html = '<option value="">-- Pilih Nama Anak --</option>'; 
+            dataAnakOrtu.forEach((a, i) => html += `<option value="${i}">${a.nama}</option>`); 
+            let ddl = document.getElementById('pilihAnakKeuangan');
+            ddl.innerHTML = html; 
+            
+            // FITUR BARU: AUTO-SHOW JIKA HANYA PUNYA 1 ANAK
+            if (dataAnakOrtu.length === 1) {
+                ddl.value = "0";
+                tarikTagihan();
+            }
+         } 
+      });
     }
     
     function tarikTagihan() {
        const idx = document.getElementById('pilihAnakKeuangan').value; if(idx==="") return;
        const wadah = document.getElementById('listTagihanContainer'); wadah.innerHTML = `<div class="text-center mt-5"><div class="spinner-border text-primary"></div></div>`;
-       fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: 'get_tagihan_anak', idDbFinance: dataUserGlobal.tenant.idDbFinance, nisn: dataAnakOrtu[idx].nisn }) })
+       
+       // SUNTIKAN NAMA ANAK AGAR BISA TERLACAK MESKIPUN TANPA NISN
+       fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: 'get_tagihan_anak', idDbFinance: dataUserGlobal.tenant.idDbFinance, nisn: dataAnakOrtu[idx].nisn, nama: dataAnakOrtu[idx].nama }) })
        .then(r=>r.json()).then(res=>{
           if(res.status==='success') {
-             if(res.data.length===0) { wadah.innerHTML = `<div class="text-center mt-5"><p>Tidak ada tagihan aktif.</p></div>`; return; }
+             if(res.data.length===0) { wadah.innerHTML = `<div class="text-center mt-5 text-success"><i class="bi bi-shield-check" style="font-size:3rem;"></i><p>Tidak ada tagihan aktif. Lunas!</p></div>`; return; }
              let html = "";
              res.data.forEach(i => {
-                let btn = i.status.includes("Lunas") && i.link_kwitansi!=="-" ? `<a href="${i.link_kwitansi}" target="_blank" class="btn btn-sm btn-success w-100 fw-bold"><i class="bi bi-download"></i> Unduh Kwitansi</a>` : `<button class="btn btn-sm btn-outline-primary w-100 fw-bold shadow-sm" onclick="bukaModalBayar('${i.id_invoice}', '${i.rincian}')"><i class="bi bi-upload"></i> Upload Bukti Bayar</button>`;
+                let btn = i.status.includes("Lunas") && i.link_kwitansi!=="-" ? `<a href="${i.link_kwitansi}" target="_blank" class="btn btn-sm btn-success w-100 fw-bold shadow-sm"><i class="bi bi-download"></i> Unduh Kwitansi</a>` : `<button class="btn btn-sm btn-outline-primary w-100 fw-bold shadow-sm" onclick="bukaModalBayar('${i.id_invoice}', '${i.rincian}')"><i class="bi bi-upload"></i> Upload Bukti Bayar</button>`;
                 html += `<div class="invoice-card ${i.status.includes("Lunas")?"lunas":""}"><div class="d-flex justify-content-between mb-2"><div><h6 class="fw-bold mb-0">${i.rincian}</h6><small class="text-muted">Batas: ${i.batas_waktu}</small></div><span class="badge bg-warning text-dark">${i.status}</span></div><p class="mb-2 fw-bold text-danger">${rupiah(i.sisa_tagihan)}</p>${btn}</div>`;
              }); wadah.innerHTML = html;
           } else { Toast.fire({icon: 'error', title: 'Gagal memuat'}); }
+       });
+    }
        });
     }
 
