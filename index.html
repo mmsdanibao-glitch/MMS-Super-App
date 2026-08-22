@@ -55,8 +55,9 @@
     <div class="login-card" id="formCardLogin">
       <div class="text-center"><h3 class="fw-bold mb-1" style="color: var(--warna-tema);">Portal NCIPS</h3><p class="text-muted small mb-4">Selamat datang kembali</p></div>
       <form id="formLoginUtama">
-        <input type="email" class="form-control input-login mb-3" id="loginEmail" required placeholder="Email Terdaftar">
-        <input type="password" class="form-control input-login mb-2" id="loginPassword" required placeholder="Kata Sandi">
+        <input type="email" class="form-control input-login mb-3" id="loginEmail" autocomplete="username" required placeholder="Email Terdaftar">
+        <!-- Tambahan Autocomplete agar Console Google Chrome tidak ngomel -->
+        <input type="password" class="form-control input-login mb-2" id="loginPassword" autocomplete="current-password" required placeholder="Kata Sandi">
         <button type="submit" id="btnLogin" class="btn-emboss mb-3 mt-4">Masuk Aplikasi</button>
         <p class="text-center small text-muted">Belum punya akun? <a class="link-aksi text-danger fw-bold" style="text-decoration:none;" onclick="gantiLayar('register')">Daftar Akun Baru</a></p>
       </form>
@@ -65,8 +66,8 @@
       <div class="text-center"><h4 class="fw-bold mb-1" style="color: var(--warna-tema);">Daftar Akun</h4></div>
       <form id="formRegisterUtama">
         <input type="text" class="form-control input-login mb-3" id="regNama" required placeholder="Nama Lengkap">
-        <input type="email" class="form-control input-login mb-3" id="regEmail" required placeholder="Email Aktif">
-        <input type="password" class="form-control input-login mb-4" id="regPassword" required minlength="6" placeholder="Buat Kata Sandi">
+        <input type="email" class="form-control input-login mb-3" id="regEmail" autocomplete="username" required placeholder="Email Aktif">
+        <input type="password" class="form-control input-login mb-4" id="regPassword" autocomplete="new-password" required minlength="6" placeholder="Buat Kata Sandi">
         <button type="submit" id="btnRegister" class="btn-emboss mb-3">Buat Akun</button>
         <p class="text-center small text-muted"><a class="link-aksi text-danger fw-bold" style="text-decoration:none;" onclick="gantiLayar('login')">Batal</a></p>
       </form>
@@ -251,10 +252,8 @@
         .then(r => r.json()).then(res => { 
             if (res.status === 'success') { localStorage.setItem('sesiPortalNCIPS', JSON.stringify(res)); tampilkanDashboard(res); } 
             else { SwalMin.fire({title: 'Gagal', text: res.pesan, icon: 'error'}); btn.innerHTML = 'Masuk Aplikasi'; btn.disabled = false; } 
-        })
-        .catch(err => {
-            // INI ALARM ANTI-MACETNYA MAS BRO!
-            SwalMin.fire({title: 'Koneksi Terputus', text: 'Gagal menghubungi Server Google. Pastikan Akses Deploy diatur ke "Siapa Saja (Anyone)".', icon: 'error', width: '320px'}); 
+        }).catch(err => {
+            SwalMin.fire({title: 'Error Server', text: 'Koneksi ke Apps Script gagal.', icon: 'error'});
             btn.innerHTML = 'Masuk Aplikasi'; btn.disabled = false;
         }); 
     });
@@ -328,7 +327,6 @@
     const toBase64 = file => new Promise((resolve, reject) => { if(!file) { resolve(""); return; } const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => resolve(reader.result); reader.onerror = error => reject(error); });
 
     // ================= KEUANGAN ORTU & KASIR =================
-    function // ================= KEUANGAN ORTU & KASIR =================
     function tarikDataAnakKeuangan() {
       fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: 'get_siswa_ortu', tenantDbId: dataUserGlobal.tenant.idDatabase, email: dataUserGlobal.user.email }) })
       .then(r => r.json()).then(res => { 
@@ -352,7 +350,6 @@
        const idx = document.getElementById('pilihAnakKeuangan').value; if(idx==="") return;
        const wadah = document.getElementById('listTagihanContainer'); wadah.innerHTML = `<div class="text-center mt-5"><div class="spinner-border text-primary"></div></div>`;
        
-       // SUNTIKAN NAMA ANAK AGAR BISA TERLACAK MESKIPUN TANPA NISN
        fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action: 'get_tagihan_anak', idDbFinance: dataUserGlobal.tenant.idDbFinance, nisn: dataAnakOrtu[idx].nisn, nama: dataAnakOrtu[idx].nama }) })
        .then(r=>r.json()).then(res=>{
           if(res.status==='success') {
@@ -363,8 +360,6 @@
                 html += `<div class="invoice-card ${i.status.includes("Lunas")?"lunas":""}"><div class="d-flex justify-content-between mb-2"><div><h6 class="fw-bold mb-0">${i.rincian}</h6><small class="text-muted">Batas: ${i.batas_waktu}</small></div><span class="badge bg-warning text-dark">${i.status}</span></div><p class="mb-2 fw-bold text-danger">${rupiah(i.sisa_tagihan)}</p>${btn}</div>`;
              }); wadah.innerHTML = html;
           } else { Toast.fire({icon: 'error', title: 'Gagal memuat'}); }
-       });
-    }
        });
     }
 
@@ -568,10 +563,11 @@
     let globalPendingKontrakIDs = [];
     function tarikDataYayasan() {
         const wadah = document.getElementById('listYayasanContainer'); wadah.innerHTML = `<div class="text-center mt-5"><div class="spinner-border text-danger"></div></div>`;
+        
         fetch(API_URL, { method: "POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({ action: 'get_pending_kontrak', idDbFinance: dataUserGlobal.tenant.idDbFinance, role: 'yayasan' }) })
         .then(r=>r.json()).then(res=>{
             if(res.status==='success') {
-                if(res.data.length===0) { wadah.innerHTML = `<p class="text-center mt-4 text-muted">Tidak ada pengajuan.</p>`; return; }
+                if(res.data.length===0) { wadah.innerHTML = `<p class="text-center mt-4 text-muted">Tidak ada pengajuan kontrak.</p>`; return; }
                 
                 globalPendingKontrakIDs = [];
                 let html = `<div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-white rounded-4 shadow-sm" style="border: 2px solid #8B0000;"><div><span class="badge bg-danger fs-6">${res.data.length} Kontrak</span><div class="small text-muted mt-1">Siap disahkan</div></div><button class="btn btn-danger fw-bold shadow-sm" onclick="sahkanMassal()"><i class="bi bi-check2-all me-1"></i> Sahkan Semua</button></div>`;
@@ -597,17 +593,17 @@
 
     function sahkanMassal() {
         if(globalPendingKontrakIDs.length === 0) return;
-        SwalMin.fire({title: 'Sahkan Massal?', text: `Sahkan ${globalPendingKontrakIDs.length} tagihan?`, icon: 'question', showCancelButton: true, confirmButtonText: 'Ya, Sahkan!'})
+        SwalMin.fire({title: 'Sahkan Massal?', text: `Sahkan ${globalPendingKontrakIDs.length} tagihan sekaligus?`, icon: 'question', showCancelButton: true, confirmButtonText: 'Ya, Sahkan!'})
         .then((result) => { if (result.isConfirmed) {
-            SwalMin.fire({title: 'Memproses...', allowOutsideClick: false, showConfirmButton: false, didOpen: () => {Swal.showLoading()}});
+            SwalMin.fire({title: 'Mencetak...', allowOutsideClick: false, showConfirmButton: false, didOpen: () => {Swal.showLoading()}});
             fetch(API_URL, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({action:'sahkan_kontrak_massal', idDbFinance: dataUserGlobal.tenant.idDbFinance, dataArrayId: globalPendingKontrakIDs}) })
-            .then(r=>r.json()).then(res=>{ if(res.status==='success') { Toast.fire({icon: 'success', title: 'Selesai!'}); tarikDataYayasan(); } else SwalMin.fire({title:'Error', text:res.pesan, icon:'error'}); });
+            .then(r=>r.json()).then(res=>{ if(res.status==='success') { Toast.fire({icon: 'success', title: 'Berhasil disahkan!'}); tarikDataYayasan(); } else SwalMin.fire({title:'Error', text:res.pesan, icon:'error'}); });
         }});
     }
 
     function hapusTagihan(id) {
         SwalMin.fire({
-            title: 'Kembalikan Tagihan', text: "Alasan revisi:", input: 'text', inputPlaceholder: 'Contoh: Diskon kurang',
+            title: 'Kembalikan Tagihan', text: "Masukkan alasan penolakan/revisi:", input: 'text', inputPlaceholder: 'Contoh: Diskon terlalu besar',
             icon: 'warning', showCancelButton: true, confirmButtonText: 'Kirim'
         }).then((result) => {
             if (result.isConfirmed) {
@@ -619,7 +615,7 @@
     }
 
     function sahkanTagihan(id) {
-        SwalMin.fire({title: 'Sahkan?', icon: 'question', showCancelButton: true, confirmButtonText: 'Ya'})
+        SwalMin.fire({title: 'Sahkan Kontrak?', text: "Mesin akan memecah invoice.", icon: 'question', showCancelButton: true, confirmButtonColor: '#198754', confirmButtonText: 'Ya, Sahkan'})
         .then((result) => { if (result.isConfirmed) {
             fetch(API_URL, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({action:'sahkan_kontrak', idDbFinance: dataUserGlobal.tenant.idDbFinance, idKontrak: id})})
             .then(r=>r.json()).then(res=>{ if(res.status==='success') { Toast.fire({icon: 'success', title: 'Berhasil'}); tarikDataYayasan(); } });
