@@ -497,28 +497,84 @@
         fetch(API_URL, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({action:'update_diskon', idDbFinance: dataUserGlobal.tenant.idDbFinance, idKontrak: idKontrak, keringanan: keringanan, diskon: diskon})
         }).then(r=>r.json()).then(res=>{ if(res.status==='success') { tampilkanPesan("Berhasil!", "Diskon berhasil diupdate.", "success"); tarikDataEditDiskon(); } else alert("Gagal: "+res.pesan); });
     }
+// ================= MEJA YAYASAN (DENGAN FITUR MASSAL) =================
+    
+    // Variabel penampung keranjang massal
+    let globalPendingKontrakIDs = [];
 
-    // ================= MEJA YAYASAN =================
     function tarikDataYayasan() {
-        const wadah = document.getElementById('listYayasanContainer'); wadah.innerHTML = `<div class="text-center mt-5"><div class="spinner-border text-danger"></div></div>`;
+        const wadah = document.getElementById('listYayasanContainer'); 
+        wadah.innerHTML = `<div class="text-center mt-5"><div class="spinner-border text-danger"></div></div>`;
+        
         fetch(API_URL, { method: "POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({ action: 'get_pending_kontrak', idDbFinance: dataUserGlobal.tenant.idDbFinance }) })
         .then(r=>r.json()).then(res=>{
             if(res.status==='success') {
                 if(res.data.length===0) { wadah.innerHTML = `<p class="text-center mt-4">Tidak ada pengajuan kontrak.</p>`; return; }
-                let html = "";
+                
+                globalPendingKontrakIDs = []; // Kosongkan keranjang
+                
+                // Tambahkan Panel Tombol Massal di Atas Daftar
+                let html = `
+                <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-white rounded-4 shadow-sm" style="border: 2px solid #8B0000;">
+                    <div>
+                       <span class="badge bg-danger fs-6">${res.data.length} Kontrak</span>
+                       <div class="small text-muted mt-1">Siap disahkan</div>
+                    </div>
+                    <button class="btn btn-danger fw-bold shadow-sm" onclick="sahkanMassal()"><i class="bi bi-check2-all me-1"></i> Sahkan Semua</button>
+                </div>
+                `;
+                
+                // Render daftarnya ke bawah
                 res.data.forEach(item => {
-                    html += `<div class="tracker-card border-danger border-2 shadow-sm"><div class="d-flex justify-content-between mb-2"><div><span class="badge bg-warning text-dark mb-1">Menunggu Sah</span><h6 class="fw-bold mb-0">${item.nama}</h6><small class="text-muted">${item.kategori}</small></div><div class="text-end fw-bold text-danger">${rupiah(item.total)}<br><small class="text-muted fw-normal"><del>${rupiah(item.nominal_standar)}</del></small></div></div><div class="bg-light p-2 rounded mb-3 small text-muted"><b>Keringanan:</b> ${item.keringanan} (Rp ${parseInt(item.diskon).toLocaleString('id-ID')})</div><div class="d-flex gap-2"><button class="btn btn-outline-danger w-50 fw-bold" onclick="hapusTagihan('${item.id_kontrak}')">Tolak</button><button class="btn btn-danger w-50 fw-bold" onclick="sahkanTagihan('${item.id_kontrak}')">Sahkan & Pecah</button></div></div>`;
-                }); wadah.innerHTML = html;
+                    globalPendingKontrakIDs.push(item.id_kontrak); // Masukkan ID ke keranjang
+                    html += `
+                    <div class="tracker-card border-danger border-2 shadow-sm">
+                        <div class="d-flex justify-content-between mb-2">
+                            <div><span class="badge bg-warning text-dark mb-1">Menunggu Sah</span><h6 class="fw-bold mb-0">${item.nama}</h6><small class="text-muted">${item.kategori}</small></div>
+                            <div class="text-end fw-bold text-danger">${rupiah(item.total)}<br><small class="text-muted fw-normal"><del>${rupiah(item.nominal_standar)}</del></small></div>
+                        </div>
+                        <div class="bg-light p-2 rounded mb-3 small text-muted"><b>Diskon:</b> Rp ${parseInt(item.diskon).toLocaleString('id-ID')}</div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-danger w-50 fw-bold" onclick="hapusTagihan('${item.id_kontrak}')">Tolak</button>
+                            <button class="btn btn-danger w-50 fw-bold" onclick="sahkanTagihan('${item.id_kontrak}')">Sahkan</button>
+                        </div>
+                    </div>`;
+                }); 
+                wadah.innerHTML = html;
             }
         });
     }
 
+    // Fungsi Baru: Tembakan Massal Yayasan
+    function sahkanMassal() {
+        if(globalPendingKontrakIDs.length === 0) return alert("Tidak ada data untuk disahkan.");
+        
+        if(confirm(`Anda akan mengesahkan ${globalPendingKontrakIDs.length} tagihan SEKALIGUS.\nMesin akan otomatis memecah tagihan ke masing-masing Invoice. Lanjutkan?`)) {
+            tampilkanPesan("Memproses", "Mencetak ratusan Invoice massal. Mohon tunggu...", "success");
+            
+            fetch(API_URL, { 
+                method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, 
+                body:JSON.stringify({action:'sahkan_kontrak_massal', idDbFinance: dataUserGlobal.tenant.idDbFinance, dataArrayId: globalPendingKontrakIDs})
+            })
+            .then(r=>r.json()).then(res=>{ 
+                document.getElementById('modalPesanUmum').style.display='none';
+                if(res.status==='success') { 
+                    alert(res.pesan); 
+                    tarikDataYayasan(); // Refresh layar
+                } else alert("Gagal: "+res.pesan); 
+            });
+        }
+    }
+
     function hapusTagihan(id) {
-        if(confirm("Yakin menolak kontrak ini?")) { fetch(API_URL, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({action:'tolak_kontrak', idDbFinance: dataUserGlobal.tenant.idDbFinance, idKontrak: id})}).then(r=>r.json()).then(res=>{ if(res.status==='success') { alert(res.pesan); tarikDataYayasan(); } else alert("Gagal: "+res.pesan); }); }
+        if(confirm("Yakin menolak kontrak ini? Data ini akan dihapus dari daftar tunggu.")) { 
+            fetch(API_URL, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({action:'tolak_kontrak', idDbFinance: dataUserGlobal.tenant.idDbFinance, idKontrak: id})})
+            .then(r=>r.json()).then(res=>{ if(res.status==='success') { alert(res.pesan); tarikDataYayasan(); } else alert("Gagal: "+res.pesan); }); 
+        }
     }
 
     function sahkanTagihan(id) {
-        if(confirm("Sahkan kontrak? Mesin akan otomatis memecah invoice sesuai tanggal.")) {
+        if(confirm("Sahkan kontrak ini secara individual?")) {
             fetch(API_URL, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({action:'sahkan_kontrak', idDbFinance: dataUserGlobal.tenant.idDbFinance, idKontrak: id})})
             .then(r=>r.json()).then(res=>{ if(res.status==='success') { alert(res.pesan); tarikDataYayasan(); } else alert("Gagal: "+res.pesan); });
         }
