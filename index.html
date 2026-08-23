@@ -214,9 +214,21 @@
     </div>
 
     <!-- AREA MEJA YAYASAN (DIKEMBALIKAN) -->
-    <div id="areaMejaYayasan" style="display: none; padding: 20px;">
-       <div class="alert alert-danger border-0 shadow-sm rounded-4 p-3"><h6 class="fw-bold mb-1"><i class="bi bi-bank me-2"></i>Meja Pengesahan Yayasan</h6><p class="small mb-0">Sahkan kontrak untuk memecah dan menerbitkan invoice.</p></div>
-       <div id="listYayasanContainer"></div>
+    <!-- AREA MEJA YAYASAN DENGAN TAB RESTRUKTURISASI -->
+    <div id="areaMejaYayasan" style="display: none; padding: 15px;">
+       <div class="alert alert-danger border-0 shadow-sm rounded-4 p-3 mb-4"><h6 class="fw-bold mb-1"><i class="bi bi-bank me-2"></i>Meja Yayasan</h6><p class="small mb-0">Sahkan tagihan baru atau ubah nilai tagihan lama (Restrukturisasi).</p></div>
+       
+       <div class="tab-keuangan mb-4">
+          <button class="tab-btn active" id="yTab_pending" onclick="switchTabYayasan('pending')">Menunggu ACC</button>
+          <button class="tab-btn" id="yTab_aktif" onclick="switchTabYayasan('aktif')">Kontrak Berjalan</button>
+       </div>
+
+       <div id="yTabContent_pending"><div id="listYayasanContainer"></div></div>
+       
+       <div id="yTabContent_aktif" style="display:none;">
+          <input type="text" class="form-control py-3 border-0 shadow-sm rounded-pill px-4 mb-4" id="cariKontrakAktif" placeholder="🔍 Ketik Nama Siswa..." onkeyup="filterKontrakAktif()">
+          <div id="listKontrakAktifContainer"></div>
+       </div>
     </div>
 
     <!-- AREA MANAJEMEN REKENING YAYASAN (DIKEMBALIKAN) -->
@@ -360,7 +372,21 @@
         });
 
         if(modulId === 'keuangan_ortu') { document.getElementById('judulModul').innerText="Tagihan & Bayar"; document.getElementById('areaKeuanganOrtu').style.display='block'; fetchAnak(); }
-        else if(modulId === 'kasir_keuangan') { document.getElementById('judulModul').innerText="Kasir & Laporan"; document.getElementById('areaKasirBendahara').style.display='block'; fetchSiswaTunai(); switchTabKasir('validasi'); }
+        else if(modulId === 'kasir_keuangan') { 
+            document.getElementById('judulModul').innerText="Kasir & Laporan"; 
+            document.getElementById('areaKasirBendahara').style.display='block'; 
+            
+            // SENSOR JABATAN: Jika Yayasan, Sembunyikan Tombol Uang!
+            if(dataUserGlobal.user.role.toLowerCase().includes('yayasan')) {
+                document.getElementById('bTab_validasi').style.display = 'none';
+                document.getElementById('bTab_tunai').style.display = 'none';
+                switchTabKasir('tunggak'); // Langsung buka halaman Tunggakan
+            } else {
+                document.getElementById('bTab_validasi').style.display = 'inline-block';
+                document.getElementById('bTab_tunai').style.display = 'inline-block';
+                fetchSiswaTunai(); switchTabKasir('validasi');
+            }
+        }
         else if(modulId === 'buat_kontrak') { document.getElementById('judulModul').innerText="Buat Tagihan"; document.getElementById('areaBuatKontrak').style.display='block'; persiapanBuatKontrak(); }
         else if(modulId === 'edit_diskon') { document.getElementById('judulModul').innerText="Edit Diskon"; document.getElementById('areaEditDiskon').style.display='block'; tarikDataEditDiskon(); }
         else if(modulId === 'meja_yayasan') { document.getElementById('judulModul').innerText="ACC Tagihan"; document.getElementById('areaMejaYayasan').style.display='block'; tarikDataYayasan(); }
@@ -986,6 +1012,67 @@ function kirimPengingatTunggakan(tenantDbId, dataTunggakanArray, yayasan, sekola
         fetch(API_URL, { method:"POST", body:JSON.stringify({action:'simpan_rekening', idDbFinance: dataUserGlobal.tenant.idDbFinance, data: payload}) }).then(r=>r.json()).then(res=>{ btn.innerHTML='Simpan'; btn.disabled=false; if(res.status==='success') { document.getElementById('modalTambahRekening').style.display='none'; document.getElementById('formTambahRek').reset(); Toast.fire({icon:'success', title:'Tersimpan'}); tarikDataRekening(); }});
     });
     function hapusRek(id) { SwalMin.fire({title:'Hapus Rekening?', icon:'warning', showCancelButton:true, confirmButtonText:'Ya, Hapus'}).then(r=>{ if(r.isConfirmed){ fetch(API_URL, {method:"POST", body:JSON.stringify({action:'hapus_rekening', idDbFinance:dataUserGlobal.tenant.idDbFinance, idRek:id})}).then(r=>r.json()).then(res=>{ if(res.status==='success') tarikDataRekening(); }); }}); }
+    // ==== MODUL TAB YAYASAN & RESTRUKTURISASI ====
+    let kontrakAktifRaw = [];
+
+    function switchTabYayasan(tab) {
+        document.getElementById('yTab_pending').classList.remove('active');
+        document.getElementById('yTab_aktif').classList.remove('active');
+        document.getElementById('yTab_' + tab).classList.add('active');
+        
+        document.getElementById('yTabContent_pending').style.display = tab === 'pending' ? 'block' : 'none';
+        document.getElementById('yTabContent_aktif').style.display = tab === 'aktif' ? 'block' : 'none';
+        
+        if(tab === 'aktif') loadKontrakAktif();
+    }
+
+    function loadKontrakAktif() {
+       document.getElementById('listKontrakAktifContainer').innerHTML = `<div class="text-center"><div class="spinner-border text-danger"></div></div>`;
+       fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_kontrak_aktif', idDbFinance: dataUserGlobal.tenant.idDbFinance }) })
+       .then(r=>r.json()).then(res=>{
+          if(res.status==='success') {
+             kontrakAktifRaw = res.data; renderKontrakAktif(kontrakAktifRaw);
+          }
+       });
+    }
+
+    function renderKontrakAktif(dataArr) {
+        let html = ""; 
+        if(dataArr.length === 0) html = `<p class="text-center text-muted">Tidak ada kontrak aktif.</p>`;
+        dataArr.forEach(i => { 
+            let alertRestruk = i.status.includes("Restrukturisasi") ? `<span class="badge bg-warning text-dark ms-2"><i class="bi bi-info-circle"></i> Direstrukturisasi</span>` : '';
+            html += `<div class="bg-white p-3 rounded-4 shadow-sm mb-3 border card-k-aktif"><div class="d-flex justify-content-between mb-2"><div><b class="text-dark">${i.nama}</b> ${alertRestruk}<br><small class="text-muted">${i.kategori}</small></div><div class="text-end"><button class="btn btn-sm btn-danger fw-bold rounded-pill shadow-sm" onclick="bukaModalRestruk('${i.id_kontrak}', '${i.nisn}', '${i.nama}', '${i.kategori}')"><i class="bi bi-pencil-square"></i> Restrukturisasi</button></div></div></div>`; 
+        }); 
+        document.getElementById('listKontrakAktifContainer').innerHTML = html;
+    }
+
+    function filterKontrakAktif() {
+        let input = document.getElementById('cariKontrakAktif').value.toLowerCase(); 
+        let filtered = kontrakAktifRaw.filter(s => s.nama.toLowerCase().includes(input));
+        renderKontrakAktif(filtered);
+    }
+
+    function bukaModalRestruk(idKtr, nisn, nama, kategori) {
+        Swal.fire({
+            title: 'Restrukturisasi Tagihan',
+            html: `<p class="small text-muted mb-3">Mengubah nilai tagihan masa depan untuk: <b>${nama}</b> (${kategori})</p>
+                   <div class="text-start mb-3"><label class="form-label small fw-bold">Nominal Tagihan Baru (Per Bulan/Termin)</label><input type="number" id="inpRestrukNominal" class="form-control" placeholder="Cth: 200000"></div>
+                   <div class="text-start"><label class="form-label small fw-bold">Alasan Restrukturisasi</label><textarea id="inpRestrukAlasan" class="form-control" rows="3" placeholder="Cth: Ortu meninggal, SK No.123"></textarea></div>`,
+            showCancelButton: true, confirmButtonText: 'Terapkan Perubahan', confirmButtonColor: '#8B0000',
+            preConfirm: () => {
+                const nom = document.getElementById('inpRestrukNominal').value;
+                const als = document.getElementById('inpRestrukAlasan').value;
+                if(!nom || !als) Swal.showValidationMessage('Nominal dan Alasan wajib diisi!');
+                return { nom: nom, als: als };
+            }
+        }).then((res) => {
+            if(res.isConfirmed) {
+                SwalMin.fire({title: 'Menyapu Database...', allowOutsideClick: false, didOpen: () => {Swal.showLoading()}});
+                fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'restrukturisasi_kontrak', idDbFinance: dataUserGlobal.tenant.idDbFinance, idKontrak: idKtr, nisn: nisn, kategori: kategori, nominalBaru: res.value.nom, alasan: res.value.als }) })
+                .then(r=>r.json()).then(rs=>{ if(rs.status==='success') { Swal.fire('Berhasil!', rs.pesan, 'success'); loadKontrakAktif(); } else Swal.fire('Gagal', rs.pesan, 'error'); });
+            }
+        });
+    }
   </script>
 </body>
 </html>
