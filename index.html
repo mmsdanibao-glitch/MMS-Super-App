@@ -1104,13 +1104,21 @@ function kirimPengingatTunggakan(tenantDbId, dataTunggakanArray, yayasan, sekola
         Swal.fire({
             title: 'Restrukturisasi Tagihan',
             html: `<p class="small text-muted mb-3">Mengubah nilai tagihan masa depan untuk: <b>${nama}</b> (${kategori})</p>
-                   <div class="text-start mb-3"><label class="form-label small fw-bold">Nominal Tagihan Baru (Per Bulan/Termin)</label><input type="number" id="inpRestrukNominal" class="form-control" placeholder="Cth: 200000"></div>
-                   <div class="text-start"><label class="form-label small fw-bold">Alasan Restrukturisasi</label><textarea id="inpRestrukAlasan" class="form-control" rows="3" placeholder="Cth: Ortu meninggal, SK No.123"></textarea></div>`,
+                   <div class="text-start mb-3">
+                       <label class="form-label small fw-bold">Nominal Tagihan Baru (Per Bulan/Termin)</label>
+                       <!-- PERBAIKAN: Pakai oninput formatRupiah agar titiknya muncul otomatis! -->
+                       <input type="text" id="inpRestrukNominal" class="form-control fw-bold text-danger fs-5" placeholder="Cth: 200.000" oninput="formatRupiahInput(this)">
+                   </div>
+                   <div class="text-start">
+                       <label class="form-label small fw-bold">Alasan Restrukturisasi</label>
+                       <textarea id="inpRestrukAlasan" class="form-control" rows="3" placeholder="Cth: Ortu meninggal, SK No.123"></textarea>
+                   </div>`,
             showCancelButton: true, confirmButtonText: 'Terapkan Perubahan', confirmButtonColor: '#8B0000',
             preConfirm: () => {
-                const nom = document.getElementById('inpRestrukNominal').value;
+                // PERBAIKAN: Bersihkan titiknya lagi jadi angka murni sebelum dikirim ke server
+                const nom = unformatRupiah(document.getElementById('inpRestrukNominal').value);
                 const als = document.getElementById('inpRestrukAlasan').value;
-                if(!nom || !als) Swal.showValidationMessage('Nominal dan Alasan wajib diisi!');
+                if(!nom || nom === 0 || !als) Swal.showValidationMessage('Nominal dan Alasan wajib diisi dengan benar!');
                 return { nom: nom, als: als };
             }
         }).then((res) => {
