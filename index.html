@@ -519,14 +519,56 @@
        });
     }
 
-    function renderTunggakan(dataArr) {
-        let html = ""; 
-        dataArr.forEach((s) => { 
-            let jsonStr = encodeURIComponent(JSON.stringify({nama: s.nama, nisn: s.nisn, total: s.totalTunggakan, rincian: s.listTagihan.join(', ')}));
-            html += `<div class="bg-white p-3 rounded-4 shadow-sm mb-3 border-start border-4 border-danger card-tunggak"><div class="d-flex justify-content-between align-items-start"><div class="d-flex gap-2"><input type="checkbox" class="form-check-input cb-tunggak-item mt-1 border-danger" style="transform: scale(1.2);" value="${jsonStr}"><div><h6 class="fw-bold mb-0 text-dark">${s.nama}</h6><small class="text-muted">${s.listTagihan.length} Tagihan Lewat Batas</small></div></div><div class="fw-bold text-danger fs-5">${rupiah(s.totalTunggakan)}</div></div><div class="mt-2 text-muted ms-4" style="font-size:0.75rem;">${s.listTagihan.join(', ')}</div></div>`; 
-        }); 
-        document.getElementById('listTunggakanContainer').innerHTML = html;
+    // =========================================================
+// MESIN TUNGGAKAN: DILENGKAPI RINCIAN NOMINAL PER ITEM
+// =========================================================
+function getTunggakanAktif(dbFinanceId) {
+  try {
+    const data = SpreadsheetApp.openById(dbFinanceId).getSheetByName("DB_Invoice").getDataRange().getDisplayValues(); 
+    let grouped = {};
+    for (let i = 1; i < data.length; i++) {
+       if(data[i][9].toString() === "Belum Bayar") {
+          let bw = data[i][2].split('/'); 
+          if(bw.length===3 && new Date(bw[2], bw[1]-1, bw[0]) < new Date()) { 
+             let ns = data[i][4]; 
+             if(!grouped[ns]) grouped[ns] = { nama: ns, nisn: data[i][3], listTagihan: [], totalTunggakan: 0 };
+             
+             // GABUNGKAN NAMA TAGIHAN & NOMINALNYA!
+             let nominalPerItem = parseInt(data[i][8]).toLocaleString('id-ID');
+             grouped[ns].listTagihan.push(data[i][5] + " (Rp " + nominalPerItem + ")"); 
+             
+             grouped[ns].totalTunggakan += parseInt(data[i][8]);
+          }
+       }
     }
+    return JSON.stringify({status: 'success', data: Object.values(grouped)});
+  } catch(e) { return JSON.stringify({status: 'error', pesan: e.message}); }
+}
+
+function kirimPengingatTunggakan(tenantDbId, dataTunggakanArray, yayasan, sekolah) {
+  try {
+    const dataStudent = SpreadsheetApp.openById(tenantDbId).getSheetByName("DB_Student").getDataRange().getDisplayValues();
+    let emailMap = {};
+    for(let i=1; i<dataStudent.length; i++) {
+        let email = dataStudent[i][1].toString().trim(), nama = dataStudent[i][2].toString().trim().toLowerCase(), nisn = dataStudent[i][5].toString().trim();
+        if(email) { if(nisn !== "-") emailMap[nisn] = email; emailMap[nama] = email; }
+    }
+    let terkirim = 0;
+    dataTunggakanArray.forEach(t => {
+        let targetEmail = emailMap[t.nisn] || emailMap[t.nama.toLowerCase()];
+        if(targetEmail) {
+            // MERACIK RINCIAN MENJADI LIST BULLET POINT (UL LI) DI EMAIL
+            let rincianListHTML = "<ul style='margin-top:5px; padding-left:20px; color:#333;'><li>" + t.rincianArr.join("</li><li>") + "</li></ul>";
+            
+            let body = `<div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ccc; border-radius: 10px; max-width: 500px;"><h3 style="color: #8B0000; margin-bottom: 5px;">Pengingat Tagihan Aktif</h3><p style="margin-top: 0; color: #555; font-size: 13px;">${yayasan} - ${sekolah}</p><p>Yth. Orang Tua / Wali dari <b>${t.nama}</b>,</p><p>Terdapat tagihan yang telah melewati batas waktu pembayaran dengan rincian:</p><div style="font-size: 13px; color: #333; background: #f8f9fc; padding: 15px; border-radius: 8px; border-left: 4px solid #d9534f; margin: 15px 0;"><b>Rincian Tunggakan:</b>${rincianListHTML}<br><b style="font-size: 16px; color: #d9534f;">Total: Rp ${parseInt(t.total).toLocaleString('id-ID')}</b></div><p style="font-size: 12px; color: #666;">Mohon segera melunasi melalui portal kami. <b>Jika Anda sudah membayar atau mengajukan restrukturisasi, mohon abaikan email ini.</b></p></div>`;
+            
+            MailApp.sendEmail({ to: targetEmail, subject: "Peringatan Tunggakan Pembayaran - " + sekolah, htmlBody: body }); 
+            terkirim++;
+        }
+    }); 
+    return JSON.stringify({status: 'success', pesan: `${terkirim} Email berhasil dikirimkan.`});
+  } catch(e) { return JSON.stringify({status: 'error', pesan: e.message}); }
+}
 
     function filterTunggakan() {
         let input = document.getElementById('cariTunggak').value.toLowerCase(); let filtered = tunggakanRaw.filter(s => s.nama.toLowerCase().includes(input));
@@ -535,22 +577,7 @@
 
     function toggleAllTunggakan(source) { document.querySelectorAll('.cb-tunggak-item').forEach(cb => { if(cb.closest('.card-tunggak').style.display !== 'none') cb.checked = source.checked; }); }
 
-    function prosesPengingatMassal() {
-        let selected = []; document.querySelectorAll('.cb-tunggak-item:checked').forEach(cb => { selected.push(JSON.parse(decodeURIComponent(cb.value))); });
-        if(selected.length === 0) return SwalMin.fire('Kosong', 'Centang minimal 1 siswa di daftar!', 'warning');
-        
-        let textWA = `*PEMBERITAHUAN TUNGGAKAN*\n*${dataUserGlobal.tenant.namaYayasan} - ${dataUserGlobal.tenant.singkatanSekolah}*\n\n`;
-        selected.forEach(s => { textWA += `👤 *${s.nama}*\n❗ Total: Rp ${parseInt(s.total).toLocaleString('id-ID')}\n📌 Item: ${s.rincian}\n\n`; });
-        textWA += `Mohon segera selesaikan administrasi melalui portal resmi kami. Abaikan pesan ini jika Bapak/Ibu sudah memproses pembayaran atau sedang mengajukan restrukturisasi. Terima kasih.`;
-        
-        Swal.fire({ title: 'Kirim Peringatan', text: `Kirim Email Otomatis ke ${selected.length} orang tua terpilih, dan siapkan Teks WA Broadcast?`, icon: 'question', showCancelButton: true, confirmButtonText: 'Kirim Email & Salin WA', confirmButtonColor: '#198754' }).then((r) => {
-           if(r.isConfirmed) {
-               SwalMin.fire({title: 'Mengirim Email...', allowOutsideClick: false, didOpen: () => {Swal.showLoading()}});
-               fetch(API_URL, { method:"POST", body:JSON.stringify({ action:'kirim_pengingat', tenantDbId: dataUserGlobal.tenant.idDatabase, dataTunggakan: selected, yayasan: dataUserGlobal.tenant.namaYayasan, sekolah: dataUserGlobal.tenant.singkatanSekolah }) })
-               .then(r=>r.json()).then(res=>{ navigator.clipboard.writeText(textWA); Swal.fire('Berhasil!', res.pesan + '<br><br>Teks WA Massal sudah disalin ke Clipboard, silakan Paste di Grup/Chat WhatsApp.', 'success'); }).catch(err => SwalMin.fire('Error', err.message, 'error'));
-           }
-        });
-    }
+    
 
     function loadRiwayatGlobal() {
        document.getElementById('listRiwayatContainer').innerHTML = `<div class="text-center"><div class="spinner-border text-secondary"></div></div>`;
