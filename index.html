@@ -7,6 +7,8 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- TAMBAHKAN BARIS INI: Mesin Pengubah Gambar -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     :root { --warna-tema: #8B0000; }
     body { background-color: #f8f9fc; font-family: 'Segoe UI', sans-serif; touch-action: pan-y; overflow-x: hidden; }
@@ -38,6 +40,8 @@
   </style>
 </head>
 <body>
+  <!-- PABRIK GAMBAR TERSEMBUNYI -->
+  <div id="wadahStruk" style="position:fixed; top:-9999px; left:-9999px; z-index:-1;"></div>
 
   <!-- LAYER AUTENTIKASI: LOGIN, REGISTER, LUPA SANDI -->
   <div id="halamanLogin" style="height: 100vh; display: flex; align-items: center; padding: 20px;">
@@ -601,8 +605,20 @@
     }
 
     function prosesBayarTunai() {
-       SwalMin.fire({ title: 'Terima Tunai', html: `Total: <b class="text-success fs-4">${rupiah(totalTagihanDipilih)}</b><br>Penerima Uang:`, input: 'text', inputPlaceholder: 'Cth: Ibu Maria', showCancelButton: true, confirmButtonText: 'Cetak E-Kwitansi', confirmButtonColor: '#198754' }).then(r=>{
-          if(r.isConfirmed){ Swal.showLoading(); fetch(API_URL, { method:"POST", body:JSON.stringify({action:'bayar_tunai', idDbFinance:dataUserGlobal.tenant.idDbFinance, idFolderFinance:dataUserGlobal.tenant.idFolderFinance, idInvoiceArray:invoiceDipilih, catatan: r.value, yayasan: dataUserGlobal.tenant.namaYayasan, sekolah: dataUserGlobal.tenant.singkatanSekolah})}).then(r=>r.json()).then(res=>{ SwalMin.fire('Sukses', res.pesan, 'success'); tarikTagihanTunai(); }); }
+       SwalMin.fire({ 
+           title: 'Terima Tunai', 
+           html: `Total: <b class="text-success fs-4">${rupiah(totalTagihanDipilih)}</b><br><br><span style="font-size:13px; font-weight:bold;">Nama Penyetor (Yang Membayar):</span>`, 
+           input: 'text', 
+           inputPlaceholder: 'Cth: Ibu Maria (Ibunda Budi)', 
+           showCancelButton: true, 
+           confirmButtonText: '<i class="bi bi-check-circle"></i> Proses Tunai', 
+           confirmButtonColor: '#198754' 
+       }).then(r=>{
+          if(r.isConfirmed){ 
+              Swal.showLoading(); 
+              fetch(API_URL, { method:"POST", body:JSON.stringify({action:'bayar_tunai', idDbFinance:dataUserGlobal.tenant.idDbFinance, idFolderFinance:dataUserGlobal.tenant.idFolderFinance, idInvoiceArray:invoiceDipilih, catatan: r.value, yayasan: dataUserGlobal.tenant.namaYayasan, sekolah: dataUserGlobal.tenant.singkatanSekolah})})
+              .then(r=>r.json()).then(res=>{ SwalMin.fire('Sukses', res.pesan, 'success'); tarikTagihanTunai(); loadRiwayatGlobal(); }); 
+          }
        });
     }
 
@@ -671,10 +687,91 @@ function kirimPengingatTunggakan(tenantDbId, dataTunggakanArray, yayasan, sekola
     function loadRiwayatGlobal() {
        document.getElementById('listRiwayatContainer').innerHTML = `<div class="text-center"><div class="spinner-border text-secondary"></div></div>`;
        fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_riwayat_global', idDbFinance: dataUserGlobal.tenant.idDbFinance }) }).then(r=>r.json()).then(res=>{
-          let html = ""; res.data.forEach(i => { 
-             html += `<div class="card-riwayat bg-white p-3 rounded-4 shadow-sm mb-3 border"><div class="d-flex justify-content-between mb-2"><div><b class="text-dark">${i.nama}</b><br><small class="text-muted">${i.rincian}</small></div><div class="text-end"><span class="fw-bold text-success">${rupiah(i.nominal)}</span><br><small style="font-size:10px;">${i.id_invoice}</small></div></div><div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-2 pt-3 border-top"><small class="text-muted"><i class="bi bi-calendar-check"></i> Lunas: ${i.tgl_lunas}</small><a href="${i.link_kwitansi}" target="_blank" class="btn btn-sm btn-dark rounded-pill px-4 shadow-sm" style="white-space:nowrap;"><i class="bi bi-printer"></i> Cetak</a></div></div>`; 
-          }); document.getElementById('listRiwayatContainer').innerHTML = html;
+          let html = ""; 
+          res.data.forEach(i => { 
+             html += `
+             <div class="card-riwayat bg-white p-3 rounded-4 shadow-sm mb-3 border">
+                 <div class="d-flex justify-content-between mb-2">
+                     <div><b class="text-dark">${i.nama}</b><br><small class="text-muted">${i.rincian}</small></div>
+                     <div class="text-end"><span class="fw-bold text-success">${rupiah(i.nominal)}</span><br><small style="font-size:10px;">${i.id_invoice}</small></div>
+                 </div>
+                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-2 pt-3 border-top">
+                     <small class="text-muted"><i class="bi bi-calendar-check"></i> Lunas: ${i.tgl_lunas}</small>
+                     <button class="btn btn-sm btn-success rounded-pill px-3 shadow-sm" style="white-space:nowrap;" onclick="cetakStrukGambar('${i.id_invoice}', '${encodeURIComponent(i.nama)}', '${encodeURIComponent(i.rincian)}', '${i.nominal}', '${i.tgl_lunas}', '${encodeURIComponent(i.catatan)}')"><i class="bi bi-image"></i> Simpan Gambar</button>
+                 </div>
+             </div>`; 
+          }); 
+          document.getElementById('listRiwayatContainer').innerHTML = html;
        });
+    }
+
+    // ==== MESIN PEMBUAT GAMBAR E-KWITANSI ====
+    function cetakStrukGambar(id, namaEnc, rincianEnc, nominal, tgl, catatanEnc) {
+        let nama = decodeURIComponent(namaEnc);
+        let rincian = decodeURIComponent(rincianEnc);
+        let catatan = decodeURIComponent(catatanEnc);
+        let yayasan = dataUserGlobal.tenant.namaYayasan;
+        let sekolah = dataUserGlobal.tenant.singkatanSekolah;
+        
+        SwalMin.fire({title: 'Membuat Gambar...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+        
+        let detailQR = encodeURIComponent(`ID: ${id}\nNama: ${nama}\nItem: ${rincian}\nTotal: Rp ${nominal}\nStatus: LUNAS\nTgl: ${tgl}`);
+        let qrUrl = "https://quickchart.io/qr?text=" + detailQR + "&size=130";
+
+        let html = `
+        <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #ffffff; padding: 25px; width: 380px; position: relative; overflow: hidden; color: #333;">
+            <div style="position: absolute; top: 40%; left: -30%; font-size: 50px; color: rgba(139, 0, 0, 0.04); font-weight: 900; white-space: nowrap; transform: rotate(-30deg); line-height: 1; z-index: 1;">
+              ${yayasan}<br>${sekolah}
+            </div>
+            <div style="text-align: center; padding-bottom: 15px; border-bottom: 2px dashed #8B0000; position: relative; z-index: 2;">
+              <h2 style="color: #8B0000; margin: 0; font-size: 20px; letter-spacing: 1px;">BUKTI PEMBAYARAN</h2>
+              <p style="margin: 5px 0 0 0; font-size: 13px; color: #555; font-weight: bold;">${yayasan} - ${sekolah}</p>
+              <p style="margin: 2px 0 0 0; font-size: 11px; color: #888;">Tgl Cetak: ${tgl}</p>
+            </div>
+            <div style="padding: 15px 0; position: relative; z-index: 2; line-height: 1.4;">
+              <p style="margin: 0; font-size: 10px; color: #888;">ID TRANSAKSI</p>
+              <p style="margin: 0 0 10px 0; font-size: 13px; font-weight: bold;">${id}</p>
+              <p style="margin: 0; font-size: 10px; color: #888;">TERIMA DARI</p>
+              <p style="margin: 0 0 10px 0; font-size: 13px; font-weight: bold;">${nama}</p>
+              <p style="margin: 0; font-size: 10px; color: #888;">GUNA PEMBAYARAN</p>
+              <p style="margin: 0 0 10px 0; font-size: 13px; font-weight: bold;">${rincian}</p>
+            </div>
+            <div style="background-color: #f8f9fc; padding: 15px; border-radius: 8px; text-align: center; border-left: 5px solid #198754; position: relative; z-index: 2;">
+              <p style="margin: 0 0 5px 0; font-size: 11px; color: #888;">TOTAL DIBAYAR</p>
+              <h1 style="color: #198754; margin: 0; font-size: 24px;">Rp ${parseInt(nominal).toLocaleString('id-ID')}</h1>
+            </div>
+            <div style="padding: 15px 0; border-bottom: 2px dashed #ccc; position: relative; z-index: 2;">
+              <p style="margin: 0 0 5px 0; font-size: 10px; color: #888;">CATATAN KASIR</p>
+              <p style="margin: 0; font-size: 12px; font-style: italic;">"${catatan}"</p>
+            </div>
+            <div style="padding-top: 15px; text-align: center; position: relative; z-index: 2;">
+              <div style="color: #198754; border: 3px solid #198754; display: inline-block; padding: 5px 20px; border-radius: 6px; letter-spacing: 3px; font-weight: 900; font-size: 16px; margin-bottom: 10px;">LUNAS</div>
+              <br><img src="${qrUrl}" crossorigin="anonymous" alt="QR" width="90" height="90" style="border: 1px solid #eee; padding: 4px; border-radius: 8px; background: white;">
+            </div>
+        </div>`;
+        
+        let container = document.getElementById('wadahStruk');
+        container.innerHTML = html;
+        
+        let img = container.querySelector('img');
+        img.onload = () => {
+            html2canvas(container.firstElementChild, { useCORS: true, scale: 2, backgroundColor: null }).then(canvas => {
+                let imgData = canvas.toDataURL("image/png");
+                Swal.fire({
+                    title: 'E-Kwitansi',
+                    html: `<p class="small text-muted mb-3">Tekan tombol hijau untuk menyimpan struk ini ke Galeri HP Anda.</p><img src="${imgData}" style="width:100%; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">`,
+                    showCancelButton: true,
+                    confirmButtonText: '<i class="bi bi-download"></i> Simpan ke HP',
+                    cancelButtonText: 'Tutup',
+                    confirmButtonColor: '#198754'
+                }).then((r) => {
+                    if(r.isConfirmed) {
+                        let a = document.createElement('a');
+                        a.href = imgData; a.download = `STRUK_${id}.png`; a.click();
+                    }
+                });
+            });
+        };
     }
 
     function filterRiwayat() {
