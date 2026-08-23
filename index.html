@@ -158,9 +158,11 @@
       </div>
 
       <div id="kTab_tunggak" style="display:none;">
-         <div class="alert alert-danger border-0 shadow-sm rounded-4 mb-3"><h6 class="fw-bold mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Radar Tunggakan Aktif</h6><small>Hapus centang untuk mengecualikan siswa dari Peringatan Massal.</small></div>
+         <div class="alert alert-danger border-0 shadow-sm rounded-4 mb-3" id="headerTunggakan">
+            <h6 class="fw-bold mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Radar Tunggakan Aktif</h6>
+         </div>
          <input type="text" class="form-control py-3 border-0 shadow-sm rounded-pill px-4 w-100 mb-3" id="cariTunggak" placeholder="🔍 Cari Nama Siswa..." onkeyup="filterTunggakan()">
-         <div class="d-flex justify-content-between mb-3 align-items-center bg-white p-3 rounded-4 shadow-sm border border-danger">
+         <div class="d-flex justify-content-between mb-3 align-items-center bg-white p-3 rounded-4 shadow-sm border border-danger" id="boxAksiTunggakan">
             <div class="form-check m-0"><input class="form-check-input border-danger" type="checkbox" id="cbTunggakanAll" onchange="toggleAllTunggakan(this)" style="transform: scale(1.3);"><label class="form-check-label fw-bold ms-2" for="cbTunggakanAll">Pilih Semua</label></div>
             <button class="btn btn-danger fw-bold shadow-sm rounded-pill px-3 btn-sm" onclick="prosesPengingatMassal()"><i class="bi bi-envelope-paper me-1"></i>Kirim Pengingat</button>
          </div>
@@ -397,16 +399,25 @@
         });
 
         if(modulId === 'keuangan_ortu') { document.getElementById('judulModul').innerText="Tagihan & Bayar"; document.getElementById('areaKeuanganOrtu').style.display='block'; fetchAnak(); }
-        else if(modulId === 'kasir_keuangan') { 
-            document.getElementById('judulModul').innerText="Kasir & Laporan"; 
-            document.getElementById('areaKasirBendahara').style.display='block'; 
-            
-            // SENSOR JABATAN: Jika Yayasan, Sembunyikan Tombol Uang!
-            if(dataUserGlobal.user.role.toLowerCase().includes('yayasan')) {
+        if(dataUserGlobal.user.role.toLowerCase().includes('yayasan')) {
                 document.getElementById('bTab_validasi').style.display = 'none';
                 document.getElementById('bTab_tunai').style.display = 'none';
-                switchTabKasir('laporan'); // Yayasan langsung disuguhi Laporan Bulanan
+                
+                // Set Header Tunggakan khusus Yayasan (Sembunyikan aksi penagihan)
+                document.getElementById('headerTunggakan').innerHTML = `<h6 class="fw-bold mb-0"><i class="bi bi-journal-text me-2"></i>Laporan Detail Tunggakan</h6><small>Rincian siswa yang melewati jatuh tempo.</small>`;
+                document.getElementById('boxAksiTunggakan').style.display = 'none'; 
+                
+                switchTabKasir('laporan'); // Yayasan langsung masuk ke Dashboard Laporan
             } else {
+                document.getElementById('bTab_validasi').style.display = 'inline-block';
+                document.getElementById('bTab_tunai').style.display = 'inline-block';
+                
+                // Set Header Tunggakan khusus Bendahara
+                document.getElementById('headerTunggakan').innerHTML = `<h6 class="fw-bold mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Radar Tunggakan Aktif</h6><small>Hapus centang untuk mengecualikan siswa dari Peringatan.</small>`;
+                document.getElementById('boxAksiTunggakan').style.display = 'flex';
+                
+                fetchSiswaTunai(); switchTabKasir('validasi');
+            }
                 document.getElementById('bTab_validasi').style.display = 'inline-block';
                 document.getElementById('bTab_tunai').style.display = 'inline-block';
                 fetchSiswaTunai(); switchTabKasir('validasi');
@@ -528,19 +539,68 @@
         else if(tab==='laporan') loadLaporanBulanan();
     }
 
+    function renderTunggakan(dataArr) {
+        let html = ""; 
+        let isYayasan = dataUserGlobal.user.role.toLowerCase().includes('yayasan');
+
+        dataArr.forEach((s) => { 
+            let jsonStr = encodeURIComponent(JSON.stringify({nama: s.nama, nisn: s.nisn, total: s.totalTunggakan, rincianArr: s.listTagihan}));
+            let rincianUi = "• " + s.listTagihan.join('<br>• ');
+            
+            // JIKA YAYASAN, SEMBUNYIKAN CHECKBOX!
+            let checkboxHtml = isYayasan ? '' : `<input type="checkbox" class="form-check-input cb-tunggak-item mt-1 border-danger me-2" style="transform: scale(1.2);" value="${jsonStr}">`;
+
+            html += `<div class="bg-white p-3 rounded-4 shadow-sm mb-3 border-start border-4 border-danger card-tunggak">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="d-flex gap-2">
+                        ${checkboxHtml}
+                        <div>
+                            <h6 class="fw-bold mb-0 text-dark">${s.nama}</h6>
+                            <small class="text-muted">${s.listTagihan.length} Tagihan Lewat Batas</small>
+                        </div>
+                    </div>
+                    <div class="fw-bold text-danger fs-5">${rupiah(s.totalTunggakan)}</div>
+                </div>
+                <div class="mt-2 text-muted ms-4" style="font-size:0.8rem; line-height: 1.6;">${rincianUi}</div>
+            </div>`; 
+        }); 
+        document.getElementById('listTunggakanContainer').innerHTML = html;
+    }
+
     function loadLaporanBulanan() {
        document.getElementById('listLaporanContainer').innerHTML = `<div class="text-center py-4"><div class="spinner-border text-info"></div></div>`;
        fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_laporan_keuangan', idDbFinance: dataUserGlobal.tenant.idDbFinance }) })
        .then(r=>r.json()).then(res=>{
           if(res.status === 'success') {
-              if(res.data.length === 0) return document.getElementById('listLaporanContainer').innerHTML = `<p class="text-center text-muted">Belum ada pendapatan tervalidasi.</p>`;
-              let html = "";
-              res.data.forEach(lap => {
-                 let rincianHTML = "";
-                 for (const [kat, nom] of Object.entries(lap.rincian)) { rincianHTML += `<div class="d-flex justify-content-between mb-1 border-bottom pb-1"><small class="text-muted">${kat}</small><small class="fw-bold text-dark">${rupiah(nom)}</small></div>`; }
-                 html += `<div class="bg-white p-3 rounded-4 shadow-sm mb-3 border-start border-4 border-info"><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="fw-bold text-dark mb-0"><i class="bi bi-calendar-event text-info me-2"></i>Bulan: ${lap.label}</h6><h5 class="fw-bold text-info mb-0">${rupiah(lap.total)}</h5></div><div class="bg-light p-2 rounded-3 mt-3"><p class="small fw-bold text-dark mb-2">Rincian Pendapatan:</p>${rincianHTML}</div></div>`;
-              });
-              document.getElementById('listLaporanContainer').innerHTML = html;
+              // KARTU DASHBOARD RINGKASAN
+              let htmlSummary = `
+              <div class="row g-2 mb-3">
+                  <div class="col-6">
+                      <div class="bg-danger text-white p-3 rounded-4 shadow-sm">
+                          <small class="d-block mb-1 opacity-75">Total Tunggakan</small>
+                          <h5 class="fw-bold mb-0">${rupiah(res.data.totalTunggakan)}</h5>
+                      </div>
+                  </div>
+                  <div class="col-6">
+                      <div class="bg-success text-white p-3 rounded-4 shadow-sm">
+                          <small class="d-block mb-1 opacity-75">Total Pendapatan</small>
+                          <h5 class="fw-bold mb-0">${rupiah(res.data.bulanan.reduce((sum, item) => sum + item.total, 0))}</h5>
+                      </div>
+                  </div>
+              </div>
+              <h6 class="fw-bold text-dark mt-4 mb-3"><i class="bi bi-calendar-check me-2"></i>Pendapatan Per Bulan</h6>
+              `;
+
+              if(res.data.bulanan.length === 0) {
+                 htmlSummary += `<p class="text-center text-muted">Belum ada pendapatan tervalidasi.</p>`;
+              } else {
+                  res.data.bulanan.forEach(lap => {
+                     let rincianHTML = "";
+                     for (const [kat, nom] of Object.entries(lap.rincian)) { rincianHTML += `<div class="d-flex justify-content-between mb-1 border-bottom pb-1"><small class="text-muted">${kat}</small><small class="fw-bold text-dark">${rupiah(nom)}</small></div>`; }
+                     htmlSummary += `<div class="bg-white p-3 rounded-4 shadow-sm mb-3 border-start border-4 border-info"><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="fw-bold text-dark mb-0"><i class="bi bi-calendar-event text-info me-2"></i>Bulan: ${lap.label}</h6><h5 class="fw-bold text-info mb-0">${rupiah(lap.total)}</h5></div><div class="bg-light p-2 rounded-3 mt-3"><p class="small fw-bold text-dark mb-2">Rincian Pendapatan:</p>${rincianHTML}</div></div>`;
+                  });
+              }
+              document.getElementById('listLaporanContainer').innerHTML = htmlSummary;
           }
        });
     }
@@ -640,28 +700,7 @@
        });
     }
 
-    function renderTunggakan(dataArr) {
-        let html = ""; 
-        dataArr.forEach((s) => { 
-            let jsonStr = encodeURIComponent(JSON.stringify({nama: s.nama, nisn: s.nisn, total: s.totalTunggakan, rincianArr: s.listTagihan}));
-            let rincianUi = "• " + s.listTagihan.join('<br>• ');
-            
-            html += `<div class="bg-white p-3 rounded-4 shadow-sm mb-3 border-start border-4 border-danger card-tunggak">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div class="d-flex gap-2">
-                        <input type="checkbox" class="form-check-input cb-tunggak-item mt-1 border-danger" style="transform: scale(1.2);" value="${jsonStr}">
-                        <div>
-                            <h6 class="fw-bold mb-0 text-dark">${s.nama}</h6>
-                            <small class="text-muted">${s.listTagihan.length} Tagihan Lewat Batas</small>
-                        </div>
-                    </div>
-                    <div class="fw-bold text-danger fs-5">${rupiah(s.totalTunggakan)}</div>
-                </div>
-                <div class="mt-2 text-muted ms-4" style="font-size:0.8rem; line-height: 1.6;">${rincianUi}</div>
-            </div>`; 
-        }); 
-        document.getElementById('listTunggakanContainer').innerHTML = html;
-    }
+    
 
     function filterTunggakan() {
         let input = document.getElementById('cariTunggak').value.toLowerCase(); 
