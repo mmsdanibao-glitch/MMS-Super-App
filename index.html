@@ -398,16 +398,25 @@
             if(document.getElementById(id)) document.getElementById(id).style.display = 'none';
         });
 
-        if(modulId === 'keuangan_ortu') { document.getElementById('judulModul').innerText="Tagihan & Bayar"; document.getElementById('areaKeuanganOrtu').style.display='block'; fetchAnak(); }
-        if(dataUserGlobal.user.role.toLowerCase().includes('yayasan')) {
+        if(modulId === 'keuangan_ortu') { 
+            document.getElementById('judulModul').innerText="Tagihan & Bayar"; 
+            document.getElementById('areaKeuanganOrtu').style.display='block'; 
+            fetchAnak(); 
+        }
+        else if(modulId === 'kasir_keuangan') { 
+            document.getElementById('judulModul').innerText="Kasir & Laporan"; 
+            document.getElementById('areaKasirBendahara').style.display='block'; 
+            
+            // SENSOR JABATAN YAYASAN
+            if(dataUserGlobal.user.role.toLowerCase().includes('yayasan')) {
                 document.getElementById('bTab_validasi').style.display = 'none';
                 document.getElementById('bTab_tunai').style.display = 'none';
                 
-                // Set Header Tunggakan khusus Yayasan (Sembunyikan aksi penagihan)
+                // Set Header Tunggakan khusus Yayasan
                 document.getElementById('headerTunggakan').innerHTML = `<h6 class="fw-bold mb-0"><i class="bi bi-journal-text me-2"></i>Laporan Detail Tunggakan</h6><small>Rincian siswa yang melewati jatuh tempo.</small>`;
                 document.getElementById('boxAksiTunggakan').style.display = 'none'; 
                 
-                switchTabKasir('laporan'); // Yayasan langsung masuk ke Dashboard Laporan
+                switchTabKasir('laporan'); 
             } else {
                 document.getElementById('bTab_validasi').style.display = 'inline-block';
                 document.getElementById('bTab_tunai').style.display = 'inline-block';
@@ -416,10 +425,6 @@
                 document.getElementById('headerTunggakan').innerHTML = `<h6 class="fw-bold mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Radar Tunggakan Aktif</h6><small>Hapus centang untuk mengecualikan siswa dari Peringatan.</small>`;
                 document.getElementById('boxAksiTunggakan').style.display = 'flex';
                 
-                fetchSiswaTunai(); switchTabKasir('validasi');
-            }
-                document.getElementById('bTab_validasi').style.display = 'inline-block';
-                document.getElementById('bTab_tunai').style.display = 'inline-block';
                 fetchSiswaTunai(); switchTabKasir('validasi');
             }
         }
