@@ -24,7 +24,15 @@
     .kategori-header { background: #f8f9fc; padding: 15px; border-radius: 12px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid #eee; }
     .swal2-popup.minimalis-popup { width: 300px !important; padding: 20px !important; border-radius: 20px !important; }
     .btn-drop-nanti { width: 100%; border: 2px dashed #ccc; background: transparent; color: #777; font-weight: bold; border-radius: 10px; padding: 10px; margin-top: 10px; }
-    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    
+    /* INI CSS YANG KEMARIN HILANG SEHINGGA LAYARNYA BERANTAKAN! */
+    .modal-overlay-custom { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; align-items: center; justify-content: center; }
+    .modal-content-custom { background: white; width: 90%; max-width: 450px; border-radius: 24px; padding: 25px; text-align: center; max-height: 90vh; overflow-y: auto; }
+    .tracker-card { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #f0f0f0; }
+    .file-upload-box { border: 2px dashed #ccc; border-radius: 12px; padding: 15px; text-align: center; background: #fafafa; cursor: pointer; margin-bottom: 15px; display: block; }
+    .file-upload-box input[type="file"] { display: none; }
+    .invoice-card { background: white; border-radius: 16px; border-left: 5px solid var(--warna-tema); padding: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
+    .invoice-card.lunas { border-left-color: #198754; }
   </style>
 </head>
 <body>
@@ -34,7 +42,6 @@
     <div style="background: white; border-radius: 24px; padding: 3rem 2rem; width: 100%; max-width: 380px; margin: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
       <h3 class="fw-bold mb-1 text-center" style="color: var(--warna-tema);">Portal NCIPS</h3>
       <form id="formLoginUtama" class="mt-4">
-        <!-- Autocomplete ditambahkan agar aman dari Error Console Chrome -->
         <input type="email" class="form-control mb-3 p-3 rounded-4 bg-light border-0" id="loginEmail" required placeholder="Email" autocomplete="username">
         <input type="password" class="form-control mb-4 p-3 rounded-4 bg-light border-0" id="loginPassword" required placeholder="Sandi" autocomplete="current-password">
         <button type="submit" id="btnLogin" class="btn-emboss">Masuk</button>
@@ -89,10 +96,7 @@
           <button class="tab-btn" id="bTab_riwayat" onclick="switchTabKasir('riwayat')">Buku Besar</button>
       </div>
       
-      <!-- SUB-TAB: VALIDASI -->
       <div id="kTab_validasi" style="display:block;"><div id="listValidasiContainer"></div></div>
-
-      <!-- SUB-TAB: BAYAR TUNAI (POS LOKET) -->
       <div id="kTab_tunai" style="display:none;">
          <div class="alert alert-primary border-0 shadow-sm rounded-4"><h6 class="fw-bold mb-0"><i class="bi bi-wallet2 me-2"></i>Kasir Loket (Tunai)</h6></div>
          <select class="form-select py-3 border-0 shadow-sm rounded-4 mb-3 fw-bold" id="selSiswaTunai" onchange="tarikTagihanTunai()"><option value="">-- Ketik/Pilih Nama Siswa --</option></select>
@@ -102,18 +106,60 @@
              <button class="btn btn-success fw-bold rounded-4 px-4" onclick="prosesBayarTunai()">Terima Tunai</button>
          </div>
       </div>
+      <div id="kTab_tunggak" style="display:none;"><div class="alert alert-danger border-0 shadow-sm rounded-4 mb-3"><h6 class="fw-bold mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Radar Tunggakan Aktif</h6><small>Siswa yang telah melewati batas waktu.</small></div><div id="listTunggakanContainer"></div></div>
+      <div id="kTab_riwayat" style="display:none;"><input type="text" class="form-control py-3 border-0 shadow-sm rounded-4 mb-4" id="cariRiwayat" placeholder="🔍 Cari Nama / Invoice..." onkeyup="filterRiwayat()"><div id="listRiwayatContainer"></div></div>
+    </div>
 
-      <!-- SUB-TAB: RADAR TUNGGAKAN -->
-      <div id="kTab_tunggak" style="display:none;">
-         <div class="alert alert-danger border-0 shadow-sm rounded-4 mb-3"><h6 class="fw-bold mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Radar Tunggakan Aktif</h6><small>Siswa yang telah melewati batas waktu.</small></div>
-         <div id="listTunggakanContainer"></div>
+    <!-- AREA BUAT KONTRAK BENDAHARA -->
+    <div id="areaBuatKontrak" style="display: none; padding: 20px;">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+         <h6 class="fw-bold mb-0"><i class="bi bi-file-earmark-plus text-danger me-2"></i>Buat Tagihan</h6>
+         <button class="btn btn-sm btn-outline-danger fw-bold shadow-sm" onclick="document.getElementById('modalTambahTarif').style.display='flex'">+ Master Tarif</button>
       </div>
+      <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+        <form id="formBuatKontrak">
+          <div class="mb-3"><label class="form-label">Pilih Siswa / Target Massal</label><select class="form-select bg-light border-0 py-2 fw-bold" id="selSiswaKontrak" onchange="cekModeMassal()" required></select></div>
+          <div class="mb-3"><label class="form-label">Kategori Tagihan</label><select class="form-select bg-light border-0 py-2 fw-bold" id="selTarifKontrak" onchange="hitungTotalKontrak()" required></select></div>
+          <div class="mb-4"><label class="form-label">Nominal Standar</label><input type="text" class="form-control bg-light border-0 py-2" id="inpNominalStandar" readonly></div>
+          <div class="alert alert-secondary border-0 p-3 rounded-4 mb-3">
+             <h6 class="fw-bold text-dark mb-3"><i class="bi bi-calendar3 me-2"></i>Waktu & Termin</h6>
+             <div class="mb-2"><label class="form-label small">Skema Pembayaran</label><select class="form-select bg-light border-0 fw-bold text-primary" id="selFrekuensiTagihan" onchange="cekFrekuensi()"><option value="Sekali">1 Kali Pembayaran (Penuh)</option><option value="Bulanan">Bulanan (Otomatis 12 Bulan)</option><option value="Semesteran">Semesteran (Otomatis 2 Termin)</option><option value="Tahunan">Tahunan (Otomatis 1 Termin)</option><option value="Cicilan Khusus">Cicilan Khusus / Restrukturisasi</option></select></div>
+             <div class="mb-2" id="areaJumlahCicilan" style="display: none;"><label class="form-label small text-danger">Berapa Kali Cicilan?</label><input type="number" class="form-control border-danger" id="inpJumlahCicilan" value="3" min="2" oninput="hitungTotalKontrak()"></div>
+             <div class="row g-2 mt-2"><div class="col-6"><label class="form-label small">Mulai Ditagih</label><input type="date" class="form-control bg-light border-0" id="inpTglMulai" required></div><div class="col-6"><label class="form-label small">Batas Akhir</label><input type="date" class="form-control bg-light border-0" id="inpTglAkhir" required></div></div>
+          </div>
+          <div class="row g-2 mb-3" id="areaDiskon">
+             <div class="col-6"><label class="form-label">Keringanan</label><select class="form-select bg-light border-0" id="selKeringanan" onchange="hitungTotalKontrak()"><option value="Tidak Ada">Tidak Ada</option><option value="Beasiswa Yayasan">Beasiswa Yayasan</option><option value="Yatim Piatu">Yatim Piatu</option><option value="Diskon Khusus">Diskon Khusus</option></select></div>
+             <div class="col-6"><label class="form-label">Nominal Diskon</label><input type="text" class="form-control bg-light border-0" id="inpDiskon" value="0" oninput="formatRupiahInput(this); hitungTotalKontrak()"></div>
+          </div>
+          <div class="mb-2"><label class="form-label text-danger">Total Kewajiban (Semua Termin)</label><input type="text" class="form-control bg-light border-0 fw-bold fs-5 text-danger" id="inpTotalKewajiban" readonly></div>
+          <div class="mb-4" id="areaNominalPerCicilan" style="display: none;"><label class="form-label text-warning">Estimasi Bayar per Termin</label><input type="text" class="form-control bg-light border-0 fw-bold fs-6" id="inpNominalPerCicilan" readonly></div>
+          <button type="submit" id="btnSubmitKontrak" class="btn-emboss mt-2 shadow-sm">Ajukan Tagihan</button>
+        </form>
+      </div>
+    </div>
 
-      <!-- SUB-TAB: RIWAYAT GLOBAL -->
-      <div id="kTab_riwayat" style="display:none;">
-         <input type="text" class="form-control py-3 border-0 shadow-sm rounded-4 mb-4" id="cariRiwayat" placeholder="🔍 Cari Nama / Invoice..." onkeyup="filterRiwayat()">
-         <div id="listRiwayatContainer"></div>
+    <!-- AREA EDIT DISKON BENDAHARA -->
+    <div id="areaEditDiskon" style="display: none; padding: 20px;">
+       <div class="alert alert-warning border-0 shadow-sm rounded-4 mb-4 p-3"><h6 class="fw-bold mb-1 text-dark"><i class="bi bi-tags text-warning me-2"></i>Daftar Tagihan & Diskon</h6><p class="small mb-0 text-muted">Edit diskon siswa atau revisi tagihan yang ditolak oleh Yayasan.</p></div>
+       <div class="input-group mb-4 shadow-sm" style="border-radius: 12px; overflow: hidden;"><span class="input-group-text bg-white border-0"><i class="bi bi-search text-muted"></i></span><input type="text" class="form-control border-0 py-3" id="cariDiskon" onkeyup="filterEditDiskon()" placeholder="Cari nama siswa atau kelas..."></div>
+       <div id="listEditDiskonContainer"></div>
+    </div>
+
+    <!-- AREA MEJA YAYASAN -->
+    <div id="areaMejaYayasan" style="display: none; padding: 20px;">
+       <div class="alert alert-danger border-0 shadow-sm rounded-4 p-3"><h6 class="fw-bold mb-1"><i class="bi bi-bank me-2"></i>Meja Pengesahan Yayasan</h6><p class="small mb-0">Sahkan kontrak untuk memecah dan menerbitkan invoice.</p></div>
+       <div id="listYayasanContainer"></div>
+    </div>
+
+    <!-- AREA MANAJEMEN REKENING YAYASAN -->
+    <div id="areaRekeningBank" style="display: none; padding: 20px;">
+      <div class="alert alert-success border-0 shadow-sm rounded-4 p-3 mb-4">
+         <div class="d-flex justify-content-between align-items-center">
+            <div><h6 class="fw-bold mb-1"><i class="bi bi-safe me-2"></i>Brankas Rekening</h6><p class="small mb-0">Atur rekening tujuan transfer.</p></div>
+            <button class="btn btn-sm btn-success fw-bold shadow-sm" onclick="document.getElementById('modalTambahRekening').style.display='flex'">+ Tambah</button>
+         </div>
       </div>
+      <div id="listRekeningContainer"></div>
     </div>
   </div>
 
@@ -122,24 +168,21 @@
     <div class="modal-content-custom text-start" style="border-radius: 30px 30px 0 0; width: 100%; max-width: 600px; padding: 30px 20px; animation: slideUp 0.3s ease;">
       <h5 class="fw-bold text-dark mb-3"><i class="bi bi-wallet2 text-danger me-2"></i>Pembayaran Tagihan</h5>
       <p class="small text-muted mb-3">Membayar <b id="lblJmlTagihanMdl" class="text-dark">0</b> tagihan senilai <b id="lblTotalMdl" class="text-danger">Rp 0</b>.</p>
-      
       <div class="mb-3">
          <label class="form-label text-dark">Pilih Bank Tujuan Transfer:</label>
          <select class="form-select fw-bold bg-light border-0 py-3 shadow-sm" id="selBankTujuan" onchange="tampilkanNoRek()" required><option value="">-- Memuat Bank... --</option></select>
       </div>
-      
       <div class="alert alert-secondary border-0 rounded-4 text-center py-3 mb-4" id="boxNoRek" style="display: none;">
          <p class="small text-muted mb-1">Silakan transfer ke rekening berikut:</p>
          <h3 class="fw-bold text-dark mb-1" id="teksNoRek" style="letter-spacing: 2px;">12345</h3>
          <p class="small text-muted fw-bold mb-2" id="teksAtasNama">a.n. Yayasan</p>
          <button class="btn btn-sm btn-outline-dark fw-bold rounded-pill px-3" onclick="copyRekening()"><i class="bi bi-clipboard"></i> Salin Rekening</button>
       </div>
-
       <form id="formUploadMultiBayar">
-         <label class="file-upload-box w-100 border-danger shadow-sm mb-4" id="boxBuktiTFMulti" style="border: 2px dashed #dc3545; display:block; padding: 20px; text-align: center; border-radius: 12px; cursor: pointer;">
+         <label class="file-upload-box w-100 border-danger shadow-sm mb-4" id="boxBuktiTFMulti">
             <i class="bi bi-receipt fs-1 text-danger" id="ikonBuktiTFMulti"></i>
             <p class="small fw-bold mt-2 mb-0 text-danger" id="teksBuktiTFMulti">Upload Bukti Transfer</p>
-            <input type="file" id="fileBuktiTFMulti" accept="image/*,application/pdf" onchange="previewFile('fileBuktiTFMulti', 'ikonBuktiTFMulti', 'teksBuktiTFMulti')" style="display:none;" required>
+            <input type="file" id="fileBuktiTFMulti" accept="image/*,application/pdf" onchange="previewFile('fileBuktiTFMulti', 'ikonBuktiTFMulti', 'teksBuktiTFMulti')" required>
          </label>
          <div class="d-flex gap-2">
             <button type="button" class="btn btn-light w-50 py-3 fw-bold rounded-4" onclick="document.getElementById('modalMultiBayar').style.display='none'">Batal</button>
@@ -149,24 +192,56 @@
     </div>
   </div>
 
+  <!-- MODAL TAMBAH REKENING -->
+  <div class="modal-overlay-custom" id="modalTambahRekening">
+    <div class="modal-content-custom text-start">
+      <h5 class="fw-bold text-dark mb-3"><i class="bi bi-plus-circle text-success me-2"></i>Tambah Rekening</h5>
+      <form id="formTambahRek">
+        <div class="mb-3"><label class="form-label">Nama Bank</label><input type="text" class="form-control bg-light border-0" id="inpNamaBank" placeholder="Contoh: BNI / BCA" required></div>
+        <div class="mb-3"><label class="form-label">Nomor Rekening</label><input type="number" class="form-control bg-light border-0" id="inpNoRek" required></div>
+        <div class="mb-4"><label class="form-label">Atas Nama</label><input type="text" class="form-control bg-light border-0" id="inpAtasNama" required></div>
+        <div class="d-flex gap-2"><button type="button" class="btn btn-light w-50 fw-bold" onclick="document.getElementById('modalTambahRekening').style.display='none'">Batal</button><button type="submit" id="btnSimpanRek" class="btn btn-success w-50 fw-bold">Simpan</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL MASTER TARIF -->
+  <div class="modal-overlay-custom" id="modalTambahTarif">
+    <div class="modal-content-custom text-start">
+      <h5 class="fw-bold text-dark mb-3"><i class="bi bi-plus-circle text-danger me-2"></i>Tambah Master Tarif</h5>
+      <form id="formTambahTarif">
+        <div class="mb-3"><label class="form-label">Kategori Tagihan</label><input type="text" class="form-control bg-light border-0" id="inpKategoriTarif" placeholder="Contoh: Uang Pangkal" required></div>
+        <div class="mb-3"><label class="form-label">Frekuensi Rekomendasi</label><select class="form-select bg-light border-0" id="inpFrekuensiTarif"><option value="Sekali">Sekali / Event</option><option value="Bulanan">Bulanan</option><option value="Semesteran">Semesteran</option><option value="Tahunan">Tahunan</option></select></div>
+        <div class="mb-3"><label class="form-label">Nominal Total (Rp)</label><input type="text" class="form-control bg-light border-0" id="inpNominalTarif" oninput="formatRupiahInput(this)" placeholder="Contoh: 1.500.000" required></div>
+        <div class="mb-4"><label class="form-label">Keterangan Singkat</label><input type="text" class="form-control bg-light border-0" id="inpKetTarif" placeholder="Opsional"></div>
+        <div class="d-flex gap-2"><button type="button" class="btn btn-light w-50 fw-bold" onclick="document.getElementById('modalTambahTarif').style.display='none'">Batal</button><button type="submit" id="btnSimpanTarif" class="btn btn-danger w-50 fw-bold">Simpan Tarif</button></div>
+      </form>
+    </div>
+  </div>
+
   <script>
     let dataUserGlobal = null; let dataAnakOrtu = []; let dataSemuaSiswa = []; let bankAccounts = [];
-    let invoiceDipilih = []; let totalTagihanDipilih = 0;
+    let invoiceDipilih = []; let totalTagihanDipilih = 0; let dataMasterTarif = [];
     
-    // MASUKKAN API URL DISINI!
+    // MASUKKAN API URL DISINI! (WAJIB GANTI YAAA!)
     const API_URL = "https://script.google.com/macros/s/AKfycbylQ9H01zpU-NP5B_yqUgyWMGPD_ECdvnFT7SS_iUUWDhKNMfSJOxFwGSGpDekvt9KjWw/exec";
 
     const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
-    const SwalMin = Swal.mixin({ customClass: { popup: 'minimalis-popup shadow-lg', title: 'minimalis-title', htmlContainer: 'minimalis-text', confirmButton: 'btn btn-danger btn-sm mx-1 px-4 rounded-3', cancelButton: 'btn btn-light btn-sm mx-1 px-4 border rounded-3' }, buttonsStyling: false });
+    const SwalMin = Swal.mixin({ customClass: { popup: 'minimalis-popup shadow-lg', title: 'minimalis-title text-dark fw-bold', htmlContainer: 'minimalis-text text-muted', confirmButton: 'btn btn-danger btn-sm mx-1 px-4 rounded-3 fw-bold', cancelButton: 'btn btn-light btn-sm mx-1 px-4 border rounded-3 fw-bold' }, buttonsStyling: false, showClass: { popup: 'animate__animated animate__zoomIn animate__faster' }, hideClass: { popup: 'animate__animated animate__zoomOut animate__faster' } });
 
+    function gantiLayar(t) { document.querySelectorAll('.login-card').forEach(e => e.style.display = 'none'); document.getElementById(t === 'login' ? 'formCardLogin' : t === 'register' ? 'formCardRegister' : 'formCardOTP').style.display = 'block'; }
     function rupiah(angka) { return "Rp " + parseInt(angka).toLocaleString('id-ID'); }
-    function parseDate(str) { let p = str.split('/'); return new Date(p[2], p[1]-1, p[0]); } // DD/MM/YYYY
+    function unformatRupiah(val) { if(!val) return 0; return parseInt(val.toString().replace(/\./g, '')) || 0; }
+    function formatRupiahInput(elem) { let val = elem.value.replace(/[^0-9]/g, ''); if(val === "") { elem.value = ""; return; } elem.value = parseInt(val, 10).toLocaleString('id-ID'); }
+    function parseDate(str) { let p = str.split('/'); return new Date(p[2], p[1]-1, p[0]); }
+    
+    window.addEventListener('DOMContentLoaded', () => { const sesi = localStorage.getItem('sesiPortalNCIPS'); if (sesi) tampilkanDashboard(JSON.parse(sesi)); });
     
     document.getElementById('formLoginUtama').addEventListener('submit', function(e) { 
         e.preventDefault(); Swal.showLoading();
         fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'login', email: document.getElementById('loginEmail').value, password: document.getElementById('loginPassword').value }) })
         .then(r=>r.json()).then(res=>{ Swal.close(); if(res.status==='success'){ dataUserGlobal=res; renderMenu(); } else SwalMin.fire('Gagal', res.pesan, 'error'); })
-        .catch(err => { Swal.close(); SwalMin.fire('Error', 'Server Google menolak koneksi. Cek URL API atau Setelan Deploy.', 'error'); }); 
+        .catch(err => { Swal.close(); SwalMin.fire('Error', 'Server menolak koneksi. Cek API URL.', 'error'); }); 
     });
 
     function logout() { SwalMin.fire({title: 'Keluar?', icon: 'question', showCancelButton: true, confirmButtonText: 'Ya', cancelButtonText: 'Batal'}).then((r) => { if(r.isConfirmed) { localStorage.removeItem('sesiPortalNCIPS'); window.top.location.reload(); }}); }
@@ -178,22 +253,42 @@
         document.getElementById('roleUser').innerText = dataUserGlobal.user.role;
         
         let htmlMenu = ''; const role = dataUserGlobal.user.role.toLowerCase();
-        if (role.includes('bendahara')) {
-           htmlMenu += `<div class="menu-card" onclick='bukaModul("kasir_keuangan")'><div class="menu-icon-wrap"><i class="bi bi-cash-coin"></i></div><p class="menu-title fw-bold text-dark">Kasir & Laporan</p></div>`;
+        
+        // LOGIKA MENU SUDAH DIKEMBALIKAN UTUH!
+        if (role === 'bendahara yayasan' || role === 'yayasan' || role.includes('ketua yayasan')) {
+            htmlMenu += `<div class="menu-card" onclick='bukaModul("meja_yayasan")'><div class="menu-icon-wrap"><i class="bi bi-bank"></i></div><p class="menu-title fw-bold text-dark">ACC Tagihan</p></div>`;
+            htmlMenu += `<div class="menu-card" onclick='bukaModul("kasir_keuangan")'><div class="menu-icon-wrap"><i class="bi bi-cash-coin"></i></div><p class="menu-title fw-bold text-dark">Pantau Kasir</p></div>`;
+            htmlMenu += `<div class="menu-card" onclick='bukaModul("rekening")'><div class="menu-icon-wrap"><i class="bi bi-safe text-success"></i></div><p class="menu-title text-success fw-bold">Rekening Bank</p></div>`;
+        } else if (role.includes('bendahara')) {
+            htmlMenu += `<div class="menu-card" onclick='bukaModul("buat_kontrak")'><div class="menu-icon-wrap"><i class="bi bi-file-earmark-plus"></i></div><p class="menu-title fw-bold text-dark">Buat Tagihan</p></div>`;
+            htmlMenu += `<div class="menu-card" onclick='bukaModul("edit_diskon")'><div class="menu-icon-wrap"><i class="bi bi-tags"></i></div><p class="menu-title fw-bold text-dark">Edit Diskon</p></div>`;
+            htmlMenu += `<div class="menu-card" onclick='bukaModul("kasir_keuangan")'><div class="menu-icon-wrap"><i class="bi bi-cash-coin"></i></div><p class="menu-title fw-bold text-dark">Kasir & Laporan</p></div>`;
+        } else if (role.includes('admin') || role.includes('kepala')) {
+            htmlMenu += `<div class="menu-card" onclick='bukaModul("verifikasi")'><div class="menu-icon-wrap"><i class="bi bi-ui-checks"></i></div><p class="menu-title fw-bold text-dark">Meja Verifikasi</p></div>`;
+            htmlMenu += `<div class="menu-card" onclick='bukaModul("meja_yayasan")'><div class="menu-icon-wrap"><i class="bi bi-bank"></i></div><p class="menu-title fw-bold text-dark">ACC Tagihan</p></div>`;
         } else {
-           htmlMenu += `<div class="menu-card" onclick='bukaModul("keuangan_ortu")'><div class="menu-icon-wrap"><i class="bi bi-wallet2"></i></div><p class="menu-title fw-bold text-dark">Tagihan & Bayar</p></div>`;
+            htmlMenu += `<div class="menu-card" onclick='bukaModul("keuangan_ortu")'><div class="menu-icon-wrap"><i class="bi bi-wallet2"></i></div><p class="menu-title fw-bold text-dark">Tagihan & Bayar</p></div>`;
         }
         document.getElementById('areaMenu').innerHTML = htmlMenu;
     }
 
     function bukaModul(modulId) {
         document.getElementById('halamanDashboard').style.display = 'none'; document.getElementById('halamanModul').style.display = 'block';
-        ['areaKeuanganOrtu', 'areaKasirBendahara'].forEach(id => document.getElementById(id).style.display = 'none');
-        
-        if(modulId === 'keuangan_ortu') { document.getElementById('judulModul').innerText="Keuangan"; document.getElementById('areaKeuanganOrtu').style.display='block'; fetchAnak(); }
-        else if(modulId === 'kasir_keuangan') { document.getElementById('judulModul').innerText="Kasir & ERP"; document.getElementById('areaKasirBendahara').style.display='block'; fetchSiswaTunai(); switchTabKasir('validasi'); }
+        ['areaKeuanganOrtu', 'areaKasirBendahara', 'areaBuatKontrak', 'areaEditDiskon', 'areaMejaYayasan', 'areaRekeningBank'].forEach(id => {
+            if(document.getElementById(id)) document.getElementById(id).style.display = 'none';
+        });
+
+        if(modulId === 'keuangan_ortu') { document.getElementById('judulModul').innerText="Tagihan & Bayar"; document.getElementById('areaKeuanganOrtu').style.display='block'; fetchAnak(); }
+        else if(modulId === 'kasir_keuangan') { document.getElementById('judulModul').innerText="Kasir & Laporan"; document.getElementById('areaKasirBendahara').style.display='block'; fetchSiswaTunai(); switchTabKasir('validasi'); }
+        else if(modulId === 'buat_kontrak') { document.getElementById('judulModul').innerText="Buat Tagihan"; document.getElementById('areaBuatKontrak').style.display='block'; persiapanBuatKontrak(); }
+        else if(modulId === 'edit_diskon') { document.getElementById('judulModul').innerText="Edit Diskon"; document.getElementById('areaEditDiskon').style.display='block'; tarikDataEditDiskon(); }
+        else if(modulId === 'meja_yayasan') { document.getElementById('judulModul').innerText="ACC Tagihan"; document.getElementById('areaMejaYayasan').style.display='block'; tarikDataYayasan(); }
+        else if(modulId === 'rekening') { document.getElementById('judulModul').innerText="Rekening Bank"; document.getElementById('areaRekeningBank').style.display='block'; tarikDataRekening(); }
     }
+    
     function tutupModul() { document.getElementById('halamanModul').style.display = 'none'; document.getElementById('halamanDashboard').style.display = 'block'; }
+    function previewFile(inputId, ikonId, teksId) { const f = document.getElementById(inputId).files[0]; if(f){ document.getElementById(ikonId).className="bi bi-check-circle-fill fs-1 text-success"; document.getElementById(teksId).innerText=f.name; document.getElementById(teksId).className="small fw-bold mt-2 mb-0 text-success"; document.getElementById(inputId).parentElement.style.borderColor="#198754"; } }
+    const toBase64 = file => new Promise((resolve, reject) => { const r = new FileReader(); r.readAsDataURL(file); r.onload = () => resolve(r.result); r.onerror = e => reject(e); });
 
     // ================= E-BANKING ORTU =================
     function fetchAnak() {
@@ -247,7 +342,6 @@
            }
 
            document.getElementById('tabContent_tagihan').innerHTML = htmlTagihan;
-           // PERBAIKAN STRING QUOTES "Belum ada riwayat" DISINI!
            document.getElementById('tabContent_riwayat').innerHTML = htmlRiwayat === "" ? "<p class='text-center text-muted'>Belum ada riwayat.</p>" : htmlRiwayat;
        });
     }
@@ -291,8 +385,6 @@
     }
 
     function copyRekening() { navigator.clipboard.writeText(document.getElementById('teksNoRek').innerText); Toast.fire({icon: 'success', title: 'Disalin'}); }
-    function previewFile(inputId, ikonId, teksId) { const f = document.getElementById(inputId).files[0]; if(f){ document.getElementById(ikonId).className="bi bi-check-circle-fill fs-1 text-success"; document.getElementById(teksId).innerText=f.name; document.getElementById(teksId).className="small fw-bold mt-2 mb-0 text-success"; document.getElementById(inputId).parentElement.style.borderColor="#198754"; } }
-    const toBase64 = file => new Promise((resolve, reject) => { const r = new FileReader(); r.readAsDataURL(file); r.onload = () => resolve(r.result); r.onerror = e => reject(e); });
 
     document.getElementById('formUploadMultiBayar').addEventListener('submit', async function(e) {
        e.preventDefault(); const btn = document.getElementById('btnKirimMulti'); btn.innerHTML='Mengunggah...'; btn.disabled=true;
@@ -300,9 +392,9 @@
           const base64 = await toBase64(document.getElementById('fileBuktiTFMulti').files[0]);
           const res = await fetch(API_URL, { method:"POST", body: JSON.stringify({action:'bayar_tagihan_massal', idDbFinance:dataUserGlobal.tenant.idDbFinance, idFolderFinance:dataUserGlobal.tenant.idFolderFinance, idInvoiceArray: invoiceDipilih, fileBukti:base64})}).then(r=>r.json());
           btn.innerHTML='Kirim Bukti'; btn.disabled=false;
-          if(res.status==='success') { document.getElementById('modalMultiBayar').style.display='none'; document.getElementById('formUploadMultiBayar').reset(); SwalMin.fire({title:'Berhasil!', text:res.pesan, icon:'success'}); tarikTagihan(); }
-          else SwalMin.fire({title:'Gagal', text:res.pesan, icon:'error'});
-       } catch(err) { SwalMin.fire('Error', err.message, 'error'); btn.disabled=false; }
+          if(res.status==='success') { document.getElementById('modalMultiBayar').style.display='none'; document.getElementById('formUploadMultiBayar').reset(); SwalMin.fire({title: 'Berhasil!', text: res.pesan, icon: 'success'}); tarikTagihan(); }
+          else SwalMin.fire({title: 'Gagal', text: res.pesan, icon: 'error'});
+       } catch(err) { SwalMin.fire({title: 'Error', text: err.message, icon: 'error'}); btn.disabled=false; }
     });
 
     // ================= KASIR BENDAHARA (4 TAB) =================
@@ -350,7 +442,7 @@
     }
 
     function prosesBayarTunai() {
-       SwalMin.fire({ title: 'Terima Tunai', html: `Total: <b class="text-success fs-4">${rupiah(totalTagihanDipilih)}</b><br>Penerima Uang:`, input: 'text', inputPlaceholder: 'Cth: Ibu Maria', showCancelButton: true, confirmButtonText: 'Cetak E-Kwitansi' }).then(r=>{
+       SwalMin.fire({ title: 'Terima Tunai', html: `Total: <b class="text-success fs-4">${rupiah(totalTagihanDipilih)}</b><br>Penerima Uang:`, input: 'text', inputPlaceholder: 'Cth: Ibu Maria', showCancelButton: true, confirmButtonText: 'Cetak E-Kwitansi', confirmButtonColor: '#198754' }).then(r=>{
           if(r.isConfirmed){ Swal.showLoading(); fetch(API_URL, { method:"POST", body:JSON.stringify({action:'bayar_tunai', idDbFinance:dataUserGlobal.tenant.idDbFinance, idFolderFinance:dataUserGlobal.tenant.idFolderFinance, idInvoiceArray:invoiceDipilih, catatan: r.value})}).then(r=>r.json()).then(res=>{ SwalMin.fire('Sukses', res.pesan, 'success'); tarikTagihanTunai(); }); }
        });
     }
@@ -374,6 +466,166 @@
         let input = document.getElementById('cariRiwayat').value.toLowerCase(); let cards = document.getElementsByClassName('card-riwayat');
         for (let i = 0; i < cards.length; i++) { if (cards[i].innerText.toLowerCase().includes(input)) cards[i].style.display = ""; else cards[i].style.display = "none"; }
     }
+
+    // ================= BUAT KONTRAK BENDAHARA =================
+    function cekFrekuensi() {
+        const frek = document.getElementById('selFrekuensiTagihan').value;
+        if (frek === "Cicilan Khusus") { document.getElementById('areaJumlahCicilan').style.display = "block"; document.getElementById('areaNominalPerCicilan').style.display = "block"; } 
+        else { document.getElementById('areaJumlahCicilan').style.display = "none"; document.getElementById('areaNominalPerCicilan').style.display = "none"; }
+        hitungTotalKontrak();
+    }
+
+    async function persiapanBuatKontrak() {
+        document.getElementById('btnSubmitKontrak').disabled = true; document.getElementById('btnSubmitKontrak').innerHTML = 'Memuat...';
+        document.getElementById('inpTglMulai').value = new Date().toISOString().split('T')[0];
+        let blnDepan = new Date(); blnDepan.setMonth(blnDepan.getMonth() + 1); document.getElementById('inpTglAkhir').value = blnDepan.toISOString().split('T')[0];
+
+        try {
+            const [resSiswa, resTarif] = await Promise.all([
+               fetch(API_URL, { method: "POST", body: JSON.stringify({action: 'get_siswa', tenantDbId: dataUserGlobal.tenant.idDatabase})}).then(r=>r.json()),
+               fetch(API_URL, { method: "POST", body: JSON.stringify({action: 'get_master_tarif', idDbFinance: dataUserGlobal.tenant.idDbFinance})}).then(r=>r.json())
+            ]);
+            
+            if(resSiswa.status==='success') {
+                dataSemuaSiswa = resSiswa.data; let optSiswa = '<option value="">-- Pilih Target --</option>';
+                let kelasUnik = [...new Set(dataSemuaSiswa.filter(s => s.nisn !== "-" && s.rombel && s.rombel !== "-").map(s => s.rombel))];
+                if(kelasUnik.length > 0) { optSiswa += '<optgroup label="🌟 TERAPKAN MASSAL PER KELAS">'; kelasUnik.forEach(kls => optSiswa += `<option value="MASSAL_${kls}" class="text-danger fw-bold">MASSAL: Semua Siswa Kelas ${kls}</option>`); optSiswa += '</optgroup>'; }
+                optSiswa += '<optgroup label="👤 SISWA SATUAN / RESTRUKTURISASI">'; dataSemuaSiswa.forEach((s, i) => { if(s.nisn !== "-") optSiswa += `<option value="${i}">${s.nama} (${s.rombel})</option>`; }); optSiswa += '</optgroup>';
+                document.getElementById('selSiswaKontrak').innerHTML = optSiswa;
+            }
+            if(resTarif.status==='success') {
+                dataMasterTarif = resTarif.data; let optTarif = '<option value="">-- Pilih Tarif --</option>';
+                dataMasterTarif.forEach((t, i) => { optTarif += `<option value="${i}">${t.kategori} - Rp ${parseInt(t.nominal).toLocaleString('id-ID')}</option>`; });
+                document.getElementById('selTarifKontrak').innerHTML = optTarif;
+            }
+            document.getElementById('btnSubmitKontrak').disabled = false; document.getElementById('btnSubmitKontrak').innerHTML = 'Ajukan Tagihan';
+        } catch(e) { Toast.fire({icon: 'error', title: 'Gagal memuat data'}); }
+    }
+    
+    function cekModeMassal() {
+        const idx = document.getElementById('selSiswaKontrak').value;
+        if(idx.toString().startsWith("MASSAL_")) { document.getElementById('areaDiskon').style.display = 'none'; document.getElementById('inpDiskon').value = "0"; document.getElementById('selKeringanan').value = "Tidak Ada"; } 
+        else { document.getElementById('areaDiskon').style.display = 'flex'; }
+        hitungTotalKontrak();
+    }
+
+    function hitungTotalKontrak() {
+        const idxTarif = document.getElementById('selTarifKontrak').value;
+        if(idxTarif === "") { document.getElementById('inpNominalStandar').value = ""; document.getElementById('inpTotalKewajiban').value = ""; document.getElementById('inpNominalPerCicilan').value = ""; return; }
+        const nominalMentah = parseInt(dataMasterTarif[idxTarif].nominal) || 0; 
+        document.getElementById('inpNominalStandar').value = nominalMentah.toLocaleString('id-ID');
+        let diskonMentah = unformatRupiah(document.getElementById('inpDiskon').value); 
+        let total = nominalMentah - diskonMentah; if (total < 0) total = 0;
+        document.getElementById('inpTotalKewajiban').value = total.toLocaleString('id-ID');
+        
+        if (document.getElementById('selFrekuensiTagihan').value === "Cicilan Khusus") {
+            let jmlCicilan = parseInt(document.getElementById('inpJumlahCicilan').value) || 1;
+            let perCicilan = Math.floor(total / Math.max(1, jmlCicilan));
+            document.getElementById('inpNominalPerCicilan').value = "Rp " + perCicilan.toLocaleString('id-ID');
+        }
+    }
+    
+    document.getElementById('formBuatKontrak').addEventListener('submit', function(e){
+        e.preventDefault();
+        const idxSiswa = document.getElementById('selSiswaKontrak').value; const idxTarif = document.getElementById('selTarifKontrak').value;
+        if(idxSiswa==="" || idxTarif==="") return Toast.fire({icon: 'warning', title: 'Pilih Target & Tarif'});
+        
+        const payloadDasar = {
+            kategori: dataMasterTarif[idxTarif].kategori, nominalStandar: dataMasterTarif[idxTarif].nominal, jenisKeringanan: document.getElementById('selKeringanan').value, nominalDiskon: unformatRupiah(document.getElementById('inpDiskon').value), totalKewajiban: unformatRupiah(document.getElementById('inpTotalKewajiban').value), frekuensi: document.getElementById('selFrekuensiTagihan').value, jumlahCicilan: document.getElementById('inpJumlahCicilan').value, tglMulai: document.getElementById('inpTglMulai').value, tglAkhir: document.getElementById('inpTglAkhir').value
+        };
+        
+        let payloadArray = [];
+        if (idxSiswa.toString().startsWith("MASSAL_")) {
+            const kls = idxSiswa.replace("MASSAL_", "");
+            dataSemuaSiswa.forEach(s => { if(s.nisn !== "-" && s.rombel === kls) { payloadArray.push({...payloadDasar, nisn: s.nisn, namaSiswa: s.nama, jenisKeringanan: "Tidak Ada", nominalDiskon: 0, totalKewajiban: payloadDasar.nominalStandar}); } });
+        } else { payloadArray.push({...payloadDasar, nisn: dataSemuaSiswa[idxSiswa].nisn, namaSiswa: dataSemuaSiswa[idxSiswa].nama}); }
+        
+        const btn = document.getElementById('btnSubmitKontrak'); btn.disabled=true; btn.innerHTML='Mengirim...';
+        fetch(API_URL, { method:"POST", body:JSON.stringify({action:'ajukan_kontrak', idDbFinance: dataUserGlobal.tenant.idDbFinance, data: payloadArray})})
+        .then(r=>r.json()).then(res=>{ btn.disabled=false; btn.innerHTML='Ajukan Tagihan'; if(res.status==='success') { Toast.fire({icon: 'success', title: 'Berhasil Diajukan!'}); document.getElementById('formBuatKontrak').reset(); } else SwalMin.fire({title:'Gagal', text:res.pesan, icon:'error'}); });
+    });
+
+    document.getElementById('formTambahTarif').addEventListener('submit', function(e) {
+        e.preventDefault(); const btn = document.getElementById('btnSimpanTarif'); btn.innerHTML = 'Menyimpan...'; btn.disabled = true;
+        const payload = { kategori: document.getElementById('inpKategoriTarif').value, frekuensi: document.getElementById('inpFrekuensiTarif').value, nominal: unformatRupiah(document.getElementById('inpNominalTarif').value), keterangan: document.getElementById('inpKetTarif').value };
+        fetch(API_URL, { method: "POST", body: JSON.stringify({action: 'tambah_master_tarif', idDbFinance: dataUserGlobal.tenant.idDbFinance, data: payload}) })
+        .then(r => r.json()).then(res => { btn.innerHTML = 'Simpan Tarif'; btn.disabled = false; if(res.status === 'success') { document.getElementById('modalTambahTarif').style.display = 'none'; Toast.fire({icon: 'success', title: 'Tarif Disimpan'}); persiapanBuatKontrak(); } else { SwalMin.fire({title:'Gagal', text:res.pesan, icon:'error'}); }});
+    });
+
+    // ================= EDIT DISKON BENDAHARA =================
+    function tarikDataEditDiskon() {
+        const wadah = document.getElementById('listEditDiskonContainer'); wadah.innerHTML = `<div class="text-center mt-3"><div class="spinner-border text-warning spinner-border-sm"></div></div>`;
+        document.getElementById('cariDiskon').value = "";
+        fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_pending_kontrak', idDbFinance: dataUserGlobal.tenant.idDbFinance, role: 'bendahara' }) })
+        .then(r=>r.json()).then(res=>{
+            if(res.status==='success') {
+                if(res.data.length===0) { wadah.innerHTML = `<p class="text-center mt-2 small text-muted">Belum ada kontrak yang dapat diedit.</p>`; return; }
+                let html = "";
+                res.data.forEach(item => {
+                    let alertDitolak = item.status.toLowerCase().startsWith("ditolak") ? `<div class="alert alert-danger p-2 small mb-2"><i class="bi bi-exclamation-triangle-fill me-1"></i> <b>Catatan Yayasan:</b> ${item.status.replace('Ditolak: ', '')}</div>` : "";
+                    html += `<div class="card border-0 shadow-sm mb-3 p-3 rounded-4 bg-white card-diskon-item">${alertDitolak}<div class="d-flex justify-content-between mb-2"><div><h6 class="fw-bold mb-0">${item.nama}</h6><small class="text-muted">${item.kategori}</small></div><div class="text-end fw-bold text-danger">${rupiah(item.total)}<br><small class="text-muted fw-normal"><del>${rupiah(item.nominal_standar)}</del></small></div></div><label class="small fw-bold text-muted mt-2">Ubah Diskon / Revisi:</label><div class="input-group input-group-sm mt-1 shadow-sm"><select class="form-select border-warning" id="editKeringanan_${item.id_kontrak}"><option value="Tidak Ada" ${item.keringanan === 'Tidak Ada' ? 'selected' : ''}>Tidak Ada</option><option value="Beasiswa Yayasan" ${item.keringanan === 'Beasiswa Yayasan' ? 'selected' : ''}>Beasiswa Yayasan</option><option value="Yatim Piatu" ${item.keringanan === 'Yatim Piatu' ? 'selected' : ''}>Yatim Piatu</option><option value="Diskon Khusus" ${item.keringanan === 'Diskon Khusus' ? 'selected' : ''}>Diskon Khusus</option></select><input type="text" class="form-control border-warning" id="editDiskon_${item.id_kontrak}" value="${parseInt(item.diskon).toLocaleString('id-ID')}" oninput="formatRupiahInput(this)"><button class="btn btn-warning fw-bold text-dark" onclick="simpanEditDiskon('${item.id_kontrak}')"><i class="bi bi-check2"></i> Simpan</button><button class="btn btn-outline-danger" onclick="hapusKontrakPermanen('${item.id_kontrak}')"><i class="bi bi-trash"></i></button></div></div>`;
+                }); wadah.innerHTML = html;
+            }
+        });
+    }
+
+    function filterEditDiskon() {
+        let input = document.getElementById('cariDiskon').value.toLowerCase(); let cards = document.getElementsByClassName('card-diskon-item');
+        for (let i = 0; i < cards.length; i++) { if (cards[i].innerText.toLowerCase().includes(input)) cards[i].style.display = ""; else cards[i].style.display = "none"; }
+    }
+
+    function simpanEditDiskon(idKontrak) {
+        fetch(API_URL, { method:"POST", body:JSON.stringify({action:'update_diskon', idDbFinance: dataUserGlobal.tenant.idDbFinance, idKontrak: idKontrak, keringanan: document.getElementById(`editKeringanan_${idKontrak}`).value, diskon: unformatRupiah(document.getElementById(`editDiskon_${idKontrak}`).value)}) })
+        .then(r=>r.json()).then(res=>{ if(res.status==='success') { Toast.fire({icon: 'success', title: 'Tersimpan & Diajukan Ulang!'}); tarikDataEditDiskon(); } else Toast.fire({icon: 'error', title: res.pesan}); });
+    }
+
+    function hapusKontrakPermanen(idKontrak) {
+        SwalMin.fire({title: 'Hapus Tagihan?', text: "Dihapus permanen.", icon: 'warning', showCancelButton: true, confirmButtonText: 'Ya, Hapus'}).then((r) => { if(r.isConfirmed) { fetch(API_URL, { method:"POST", body:JSON.stringify({action:'hapus_kontrak', idDbFinance: dataUserGlobal.tenant.idDbFinance, idKontrak: idKontrak}) }).then(r=>r.json()).then(res=>{ if(res.status==='success') { Toast.fire({icon: 'success', title: 'Terhapus'}); tarikDataEditDiskon(); }}); }});
+    }
+
+    // ================= MEJA YAYASAN =================
+    let globalPendingKontrakIDs = [];
+    function tarikDataYayasan() {
+        const wadah = document.getElementById('listYayasanContainer'); wadah.innerHTML = `<div class="text-center mt-5"><div class="spinner-border text-danger"></div></div>`;
+        fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_pending_kontrak', idDbFinance: dataUserGlobal.tenant.idDbFinance, role: 'yayasan' }) }).then(r=>r.json()).then(res=>{
+            if(res.status==='success') {
+                if(res.data.length===0) { wadah.innerHTML = `<p class="text-center mt-4 text-muted">Tidak ada pengajuan.</p>`; return; }
+                globalPendingKontrakIDs = []; let html = `<div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-white rounded-4 shadow-sm" style="border: 2px solid #8B0000;"><div><span class="badge bg-danger fs-6">${res.data.length} Kontrak</span><div class="small text-muted mt-1">Siap disahkan</div></div><button class="btn btn-danger fw-bold shadow-sm" onclick="sahkanMassal()"><i class="bi bi-check2-all me-1"></i> Sahkan Semua</button></div>`;
+                res.data.forEach(item => { globalPendingKontrakIDs.push(item.id_kontrak); html += `<div class="tracker-card border-danger border-2 shadow-sm"><div class="d-flex justify-content-between mb-2"><div><span class="badge bg-warning text-dark mb-1">Menunggu Sah</span><h6 class="fw-bold mb-0">${item.nama}</h6><small class="text-muted">${item.kategori}</small></div><div class="text-end fw-bold text-danger">${rupiah(item.total)}<br><small class="text-muted fw-normal"><del>${rupiah(item.nominal_standar)}</del></small></div></div><div class="bg-light p-2 rounded mb-3 small text-muted"><b>Diskon:</b> Rp ${parseInt(item.diskon).toLocaleString('id-ID')} (${item.keringanan})</div><div class="d-flex gap-2"><button class="btn btn-outline-danger w-50 fw-bold shadow-sm" onclick="hapusTagihan('${item.id_kontrak}')"><i class="bi bi-x-circle"></i> Kembalikan</button><button class="btn btn-danger w-50 fw-bold shadow-sm" onclick="sahkanTagihan('${item.id_kontrak}')"><i class="bi bi-check2"></i> Sahkan</button></div></div>`; }); wadah.innerHTML = html;
+            }
+        });
+    }
+
+    function sahkanMassal() {
+        if(globalPendingKontrakIDs.length === 0) return;
+        SwalMin.fire({title: 'Sahkan Massal?', text: `Sahkan ${globalPendingKontrakIDs.length} tagihan sekaligus?`, icon: 'question', showCancelButton: true, confirmButtonText: 'Ya, Sahkan!'}).then((r) => { if (r.isConfirmed) { SwalMin.fire({title: 'Mencetak...', allowOutsideClick: false, showConfirmButton: false, didOpen: () => {Swal.showLoading()}}); fetch(API_URL, { method:"POST", body:JSON.stringify({action:'sahkan_kontrak_massal', idDbFinance: dataUserGlobal.tenant.idDbFinance, dataArrayId: globalPendingKontrakIDs}) }).then(r=>r.json()).then(res=>{ if(res.status==='success') { Toast.fire({icon: 'success', title: 'Selesai!'}); tarikDataYayasan(); } else SwalMin.fire({title:'Error', text:res.pesan, icon:'error'}); }); }});
+    }
+
+    function hapusTagihan(id) {
+        SwalMin.fire({ title: 'Kembalikan Tagihan', text: "Masukkan alasan penolakan/revisi:", input: 'text', inputPlaceholder: 'Contoh: Diskon terlalu besar', icon: 'warning', showCancelButton: true, confirmButtonText: 'Kirim' }).then((r) => { if (r.isConfirmed) { fetch(API_URL, { method:"POST", body:JSON.stringify({action:'tolak_kontrak', idDbFinance: dataUserGlobal.tenant.idDbFinance, idKontrak: id, alasan: r.value || "Ditolak"})}).then(r=>r.json()).then(res=>{ if(res.status==='success') { Toast.fire({icon: 'info', title: 'Dikembalikan'}); tarikDataYayasan(); } }); }});
+    }
+
+    function sahkanTagihan(id) {
+        SwalMin.fire({title: 'Sahkan?', icon: 'question', showCancelButton: true, confirmButtonText: 'Ya'}).then((r) => { if (r.isConfirmed) { fetch(API_URL, { method:"POST", body:JSON.stringify({action:'sahkan_kontrak', idDbFinance: dataUserGlobal.tenant.idDbFinance, idKontrak: id})}).then(r=>r.json()).then(res=>{ if(res.status==='success') { Toast.fire({icon: 'success', title: 'Berhasil'}); tarikDataYayasan(); } }); }});
+    }
+
+    // ================= MANAJEMEN REKENING BANK (YAYASAN) =================
+    function tarikDataRekening() {
+      const wadah = document.getElementById('listRekeningContainer'); wadah.innerHTML = `<div class="text-center mt-5"><div class="spinner-border text-success"></div></div>`;
+      fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_rekening', idDbFinance: dataUserGlobal.tenant.idDbFinance }) }).then(r=>r.json()).then(res=>{
+         if(res.status==='success') {
+            bankAccounts = res.data;
+            if(res.data.length===0) { wadah.innerHTML = `<p class="text-center mt-4">Belum ada rekening.</p>`; return; }
+            let html = ""; res.data.forEach(r => { html += `<div class="card border-success border-2 shadow-sm rounded-4 mb-3 p-3"><div class="d-flex justify-content-between align-items-center"><div><h5 class="fw-bold text-dark mb-0" style="letter-spacing:1px;">${r.no_rek}</h5><div class="fw-bold text-success">${r.nama_bank}</div><small class="text-muted">a.n. ${r.atas_nama}</small></div><button class="btn btn-outline-danger btn-sm rounded-circle" onclick="hapusRek('${r.id_rek}')"><i class="bi bi-trash"></i></button></div></div>`; }); wadah.innerHTML = html;
+         }
+      });
+    }
+    document.getElementById('formTambahRek').addEventListener('submit', function(e){
+        e.preventDefault(); const btn = document.getElementById('btnSimpanRek'); btn.innerHTML='Menyimpan...'; btn.disabled=true;
+        const payload = { nama_bank: document.getElementById('inpNamaBank').value, no_rek: document.getElementById('inpNoRek').value, atas_nama: document.getElementById('inpAtasNama').value };
+        fetch(API_URL, { method:"POST", body:JSON.stringify({action:'simpan_rekening', idDbFinance: dataUserGlobal.tenant.idDbFinance, data: payload}) }).then(r=>r.json()).then(res=>{ btn.innerHTML='Simpan'; btn.disabled=false; if(res.status==='success') { document.getElementById('modalTambahRekening').style.display='none'; document.getElementById('formTambahRek').reset(); Toast.fire({icon:'success', title:'Tersimpan'}); tarikDataRekening(); }});
+    });
+    function hapusRek(id) { SwalMin.fire({title:'Hapus Rekening?', icon:'warning', showCancelButton:true, confirmButtonText:'Ya, Hapus'}).then(r=>{ if(r.isConfirmed){ fetch(API_URL, {method:"POST", body:JSON.stringify({action:'hapus_rekening', idDbFinance:dataUserGlobal.tenant.idDbFinance, idRek:id})}).then(r=>r.json()).then(res=>{ if(res.status==='success') tarikDataRekening(); }); }}); }
   </script>
 </body>
 </html>
