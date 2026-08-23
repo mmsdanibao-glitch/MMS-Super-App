@@ -424,22 +424,25 @@
             document.getElementById('judulModul').innerText="Kasir & Laporan"; 
             document.getElementById('areaKasirBendahara').style.display='block'; 
             
+            // SENSOR JABATAN YAYASAN
             if(dataUserGlobal.user.role.toLowerCase().includes('yayasan')) {
                 document.getElementById('bTab_validasi').style.display = 'none';
                 document.getElementById('bTab_tunai').style.display = 'none';
                 
-                document.getElementById('headerTunggakan').innerHTML = `<h6 class="fw-bold mb-0"><i class="bi bi-journal-text me-2"></i>Laporan Detail Tunggakan</h6><small>Rincian siswa yang melewati jatuh tempo.</small>`;
+                // Set Header Tunggakan khusus Yayasan (Ditambah tombol CETAK)
+                document.getElementById('headerTunggakan').innerHTML = `<div class="d-flex justify-content-between align-items-center w-100"><div><h6 class="fw-bold mb-0"><i class="bi bi-journal-text me-2"></i>Detail Tunggakan Aktif</h6><small>Rincian siswa yang lewat jatuh tempo.</small></div><button class="btn btn-sm btn-danger fw-bold rounded-pill shadow-sm" onclick="cetakLaporanTunggakan()"><i class="bi bi-printer"></i> Cetak</button></div>`;
                 document.getElementById('boxAksiTunggakan').style.display = 'none'; 
                 
-                switchTabKasir('tunggak'); // DEFAULT TAB KIRI YAYASAN = TUNGGAKAN
+                switchTabKasir('tunggak'); 
             } else {
                 document.getElementById('bTab_validasi').style.display = 'inline-block';
                 document.getElementById('bTab_tunai').style.display = 'inline-block';
                 
-                document.getElementById('headerTunggakan').innerHTML = `<h6 class="fw-bold mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Radar Tunggakan Aktif</h6><small>Hapus centang untuk mengecualikan siswa dari Peringatan.</small>`;
+                // Set Header Tunggakan khusus Bendahara
+                document.getElementById('headerTunggakan').innerHTML = `<div><h6 class="fw-bold mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Radar Tunggakan Aktif</h6><small>Hapus centang untuk mengecualikan siswa dari Peringatan.</small></div>`;
                 document.getElementById('boxAksiTunggakan').style.display = 'flex';
                 
-                fetchSiswaTunai(); switchTabKasir('validasi'); // DEFAULT TAB KIRI BENDAHARA = VALIDASI
+                fetchSiswaTunai(); switchTabKasir('validasi');
             }
         }
         else if(modulId === 'buat_kontrak') { document.getElementById('judulModul').innerText="Buat Tagihan"; document.getElementById('areaBuatKontrak').style.display='block'; persiapanBuatKontrak(); }
@@ -570,7 +573,7 @@
 
     function eksekusiValidasi(id) {
        SwalMin.fire({ title: 'Validasi & Cetak PDF', text: 'Catatan struk PDF:', input: 'text', inputPlaceholder: 'Cth: Lunas via BCA', showCancelButton: true, confirmButtonText: 'Sah!', preConfirm: (v) => { if(!v) Swal.showValidationMessage('Wajib diisi!') } }).then(r=>{
-          if(r.isConfirmed){ Swal.showLoading(); fetch(API_URL, { method:"POST", body:JSON.stringify({action:'verifikasi_pembayaran', idDbFinance:dataUserGlobal.tenant.idDbFinance, idFolderFinance:dataUserGlobal.tenant.idFolderFinance, idInvoice:id, catatan: r.value, yayasan: dataUserGlobal.tenant.namaYayasan, sekolah: dataUserGlobal.tenant.singkatanSekolah})}).then(r=>r.json()).then(res=>{ Toast.fire({icon:'success', title:'Tercetak!'}); loadValidasiKasir(); }); }
+          if(r.isConfirmed){ Swal.showLoading(); fetch(API_URL, { method:"POST", body:JSON.stringify({action:'verifikasi_pembayaran', idDbFinance:dataUserGlobal.tenant.idDbFinance, idFolderFinance:dataUserGlobal.tenant.idFolderFinance, idInvoice:id, catatan: r.value, yayasan: dataUserGlobal.tenant.namaYayasan, sekolah: dataUserGlobal.tenant.singkatanSekolah, namaKasir: dataUserGlobal.user.nama})}).then(r=>r.json()).then(res=>{ Toast.fire({icon:'success', title:'Tercetak!'}); loadValidasiKasir(); }); }
        });
     }
 
@@ -617,7 +620,7 @@
            title: 'Terima Tunai', html: `Total: <b class="text-success fs-4">${rupiah(totalTagihanDipilih)}</b><br><br><span style="font-size:13px; font-weight:bold;">Nama Penyetor (Yang Membayar):</span>`, 
            input: 'text', inputPlaceholder: 'Cth: Ibu Maria (Ibunda Budi)', showCancelButton: true, confirmButtonText: '<i class="bi bi-check-circle"></i> Proses Tunai', confirmButtonColor: '#198754' 
        }).then(r=>{
-          if(r.isConfirmed){ Swal.showLoading(); fetch(API_URL, { method:"POST", body:JSON.stringify({action:'bayar_tunai', idDbFinance:dataUserGlobal.tenant.idDbFinance, idFolderFinance:dataUserGlobal.tenant.idFolderFinance, idInvoiceArray:invoiceDipilih, catatan: r.value, yayasan: dataUserGlobal.tenant.namaYayasan, sekolah: dataUserGlobal.tenant.singkatanSekolah})}).then(r=>r.json()).then(res=>{ SwalMin.fire('Sukses', res.pesan, 'success'); tarikTagihanTunai(); }); }
+          if(r.isConfirmed){ Swal.showLoading(); fetch(API_URL, { method:"POST", body:JSON.stringify({action:'bayar_tunai', idDbFinance:dataUserGlobal.tenant.idDbFinance, idFolderFinance:dataUserGlobal.tenant.idFolderFinance, idInvoiceArray:invoiceDipilih, catatan: r.value, yayasan: dataUserGlobal.tenant.namaYayasan, sekolah: dataUserGlobal.tenant.singkatanSekolah, namaKasir: dataUserGlobal.user.nama})}).then(r=>r.json()).then(res=>{ SwalMin.fire('Sukses', res.pesan, 'success'); tarikTagihanTunai(); }); }
        });
     }
 
@@ -647,6 +650,49 @@
 
     function filterTunggakan() { let input = document.getElementById('cariTunggak').value.toLowerCase(); let filtered = tunggakanRaw.filter(s => s.nama.toLowerCase().includes(input)); renderTunggakan(filtered); document.getElementById('cbTunggakanAll').checked = false; }
     function toggleAllTunggakan(source) { document.querySelectorAll('.cb-tunggak-item').forEach(cb => { if(cb.closest('.card-tunggak').style.display !== 'none') cb.checked = source.checked; }); }
+    function cetakLaporanTunggakan() {
+        if(!tunggakanRaw || tunggakanRaw.length === 0) return SwalMin.fire('Kosong', 'Tidak ada data tunggakan untuk dicetak.', 'warning');
+        
+        let htmlCetak = `
+        <html><head><title>Laporan_Tunggakan</title>
+        <style>
+            body { font-family: 'Times New Roman', serif; font-size: 13px; color: #333; }
+            table { width: 100%; border-collapse: collapse; margin: 15px 0 30px 0; }
+            th, td { border: 1px solid #666; padding: 8px 10px; text-align: left; vertical-align: top; }
+            th { background-color: #f4f4f4; text-transform: uppercase; font-size: 11px; }
+            .text-right { text-align: right; }
+            .text-center { text-align: center; }
+            .kop { text-align: center; border-bottom: 3px double #000; padding-bottom: 15px; margin-bottom: 20px; }
+        </style>
+        </head><body onload="window.print()">
+            <div class="kop">
+                <h2 style="margin:0;">YAYASAN PENDIDIKAN KRISTO REGI</h2>
+                <h3 style="margin:5px 0;">${dataUserGlobal.tenant.singkatanSekolah}</h3>
+                <p style="margin:0;">Laporan Detail Tunggakan Siswa - Per Tanggal <b>${new Date().toLocaleDateString('id-ID')}</b></p>
+            </div>
+            <table>
+                <tr><th width="5%">No</th><th width="30%">Nama Siswa (NISN)</th><th width="40%">Rincian Tagihan Lewat Batas</th><th class="text-right" width="25%">Total Tunggakan (Rp)</th></tr>`;
+        
+        let grandTotal = 0;
+        tunggakanRaw.forEach((t, i) => {
+            grandTotal += t.totalTunggakan;
+            let rincianList = t.listTagihan.join("<br>");
+            htmlCetak += `<tr><td class="text-center">${i+1}</td><td><b>${t.nama}</b><br><small>${t.nisn}</small></td><td>${rincianList}</td><td class="text-right fw-bold">${rupiah(t.totalTunggakan)}</td></tr>`;
+        });
+        
+        htmlCetak += `<tr><th colspan="3" class="text-right">GRAND TOTAL KESELURUHAN TUNGGAKAN</th><th class="text-right" style="font-size:14px;">${rupiah(grandTotal)}</th></tr></table>
+            <div style="float: right; width: 250px; text-align: center; margin-top: 30px;">
+                <p>Kupang, ${new Date().toLocaleDateString('id-ID')}<br>Mengesahkan,</p>
+                <br><br><br>
+                <p style="margin-bottom:0;"><b>_____________________</b></p>
+                <p style="margin-top:5px;">Ketua / Bendahara Yayasan</p>
+            </div>
+        </body></html>`;
+        
+        let jendelaCetak = window.open('', '_blank');
+        jendelaCetak.document.write(htmlCetak);
+        jendelaCetak.document.close();
+    }
 
     // ==== TAB 4: RIWAYAT BUKU BESAR ====
     function loadRiwayatGlobal() {
