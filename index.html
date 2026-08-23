@@ -624,17 +624,82 @@
        });
     }
 
-    // ==== TAB 3: RADAR TUNGGAKAN ====
     function loadTunggakan() {
-       const wadah = document.getElementById('listTunggakanContainer'); wadah.innerHTML = `<div class="text-center py-4"><div class="spinner-border text-danger"></div></div>`;
-       document.getElementById('cariTunggak').value = ""; document.getElementById('cbTunggakanAll').checked = false;
+       const wadah = document.getElementById('listTunggakanContainer'); 
+       wadah.innerHTML = `<div class="text-center py-4"><div class="spinner-border text-danger"></div></div>`;
+       document.getElementById('cariTunggak').value = ""; 
+       document.getElementById('cbTunggakanAll').checked = false;
+       
+       // SENSOR JABATAN: Sembunyikan Tombol Kirim & Ubah Header untuk Yayasan
+       let isYayasan = dataUserGlobal.user.role.toLowerCase().includes('yayasan');
+       if(isYayasan) {
+           document.getElementById('boxAksiTunggakan').style.display = 'none';
+           document.getElementById('headerTunggakan').innerHTML = `<div class="d-flex justify-content-between align-items-center w-100"><div><h6 class="fw-bold mb-0 text-danger"><i class="bi bi-journal-text me-2"></i>Laporan Detail Tunggakan</h6><small class="text-muted">Rincian tagihan siswa yang lewat batas.</small></div><button class="btn btn-sm btn-danger fw-bold rounded-pill shadow-sm" onclick="cetakLaporanTunggakan()"><i class="bi bi-printer me-1"></i> Cetak PDF</button></div>`;
+       } else {
+           document.getElementById('boxAksiTunggakan').style.display = 'flex';
+           document.getElementById('headerTunggakan').innerHTML = `<h6 class="fw-bold mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Radar Tunggakan Aktif</h6><small>Hapus centang untuk mengecualikan siswa dari Peringatan.</small>`;
+       }
+
        fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_tunggakan', idDbFinance: dataUserGlobal.tenant.idDbFinance }) })
        .then(r=>r.json()).then(res=>{
           if(res.status === 'success') {
-              if(!res.data || res.data.length === 0) return wadah.innerHTML = `<p class="text-center text-success py-4"><i class="bi bi-emoji-smile fs-3"></i><br>Bersih! Tidak ada siswa yang menunggak.</p>`; 
-              tunggakanRaw = res.data; renderTunggakan(tunggakanRaw);
-          } else wadah.innerHTML = `<p class="text-center text-danger">Gagal memuat data tunggakan: ${res.pesan}</p>`;
-       }).catch(err => { wadah.innerHTML = `<p class="text-center text-danger">Kesalahan koneksi server.</p>`; });
+              if(!res.data || res.data.length === 0) { 
+                  wadah.innerHTML = `<p class="text-center text-success py-4"><i class="bi bi-emoji-smile fs-3"></i><br>Bersih! Tidak ada siswa yang menunggak.</p>`; 
+                  return; 
+              }
+              tunggakanRaw = res.data; 
+              renderTunggakan(tunggakanRaw);
+          } else {
+              wadah.innerHTML = `<p class="text-center text-danger">Gagal memuat data tunggakan: ${res.pesan}</p>`;
+          }
+       }).catch(err => {
+           wadah.innerHTML = `<p class="text-center text-danger">Kesalahan koneksi server.</p>`;
+       });
+    }
+
+    // MESIN CETAK LAPORAN TUNGGAKAN KHUSUS YAYASAN
+    function cetakLaporanTunggakan() {
+        if(!tunggakanRaw || tunggakanRaw.length === 0) return SwalMin.fire('Kosong', 'Tidak ada data tunggakan untuk dicetak.', 'warning');
+        
+        let htmlCetak = `
+        <html><head><title>Laporan_Tunggakan_${dataUserGlobal.tenant.singkatanSekolah}</title>
+        <style>
+            body { font-family: 'Times New Roman', serif; font-size: 13px; color: #333; }
+            table { width: 100%; border-collapse: collapse; margin: 15px 0 30px 0; }
+            th, td { border: 1px solid #666; padding: 8px 10px; text-align: left; vertical-align: top; }
+            th { background-color: #f4f4f4; text-transform: uppercase; font-size: 11px; }
+            .text-right { text-align: right; }
+            .text-center { text-align: center; }
+            .kop { text-align: center; border-bottom: 3px double #000; padding-bottom: 15px; margin-bottom: 20px; }
+        </style>
+        </head><body onload="window.print()">
+            <div class="kop">
+                <h2 style="margin:0;">${dataUserGlobal.tenant.namaYayasan}</h2>
+                <h3 style="margin:5px 0;">${dataUserGlobal.tenant.singkatanSekolah}</h3>
+                <p style="margin:0;">Laporan Detail Tunggakan Siswa - Per Tanggal <b>${new Date().toLocaleDateString('id-ID')}</b></p>
+            </div>
+            <table>
+                <tr><th width="5%">No</th><th width="30%">Nama Siswa (NISN)</th><th width="40%">Rincian Tagihan Lewat Batas</th><th class="text-right" width="25%">Total Tunggakan (Rp)</th></tr>`;
+        
+        let grandTotal = 0;
+        tunggakanRaw.forEach((t, i) => {
+            grandTotal += t.totalTunggakan;
+            let rincianList = t.listTagihan.join("<br>");
+            htmlCetak += `<tr><td class="text-center">${i+1}</td><td><b>${t.nama}</b><br><small>${t.nisn}</small></td><td>${rincianList}</td><td class="text-right fw-bold">${rupiah(t.totalTunggakan)}</td></tr>`;
+        });
+        
+        htmlCetak += `<tr><th colspan="3" class="text-right">GRAND TOTAL KESELURUHAN TUNGGAKAN</th><th class="text-right" style="font-size:14px;">${rupiah(grandTotal)}</th></tr></table>
+            <div style="float: right; width: 250px; text-align: center; margin-top: 30px;">
+                <p>Kupang, ${new Date().toLocaleDateString('id-ID')}<br>Mengesahkan,</p>
+                <br><br><br>
+                <p style="margin-bottom:0;"><b>_____________________</b></p>
+                <p style="margin-top:5px;">Ketua / Bendahara Yayasan</p>
+            </div>
+        </body></html>`;
+        
+        let jendelaCetak = window.open('', '_blank');
+        jendelaCetak.document.write(htmlCetak);
+        jendelaCetak.document.close();
     }
 
     function renderTunggakan(dataArr) {
