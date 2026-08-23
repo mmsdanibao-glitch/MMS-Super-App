@@ -505,7 +505,7 @@
        
        // Mesin hanya akan menembak data ke server JIKA Bendahara sudah memilih nama yang valid
        // Ini mencegah loading terus-menerus saat Bendahara baru mengetik 1 huruf
-       let targetSiswa = dataSemuaSiswa.find(s => s.nama.toLowerCase() === val.toLowerCase());
+       let targetSiswa = dataSemuaSiswa.find(s => s.nama.toLowerCase() === val.toLowerCase() || s.nisn.toLowerCase() === val.toLowerCase());
        if(!targetSiswa) return; 
 
        let nisnTarget = targetSiswa.nisn;
