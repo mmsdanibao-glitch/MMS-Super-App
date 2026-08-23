@@ -581,9 +581,15 @@
        fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_laporan_keuangan', idDbFinance: dataUserGlobal.tenant.idDbFinance }) })
        .then(r=>r.json()).then(res=>{
           if(res.status === 'success') {
+              // SENSOR DETEKSI SERVER LAMA:
+              if(!res.data.bulanan) {
+                  SwalMin.fire('Belum Di-Deploy!', 'Server masih mengirim format lama. Harap Deploy ulang Code.gs!', 'warning');
+                  document.getElementById('listLaporanContainer').innerHTML = `<p class="text-danger text-center"><i class="bi bi-x-circle text-danger fs-3"></i><br>Error: Struktur server lama terdeteksi.</p>`;
+                  return;
+              }
+
               dataLaporanGlobal = res.data;
               
-              // 1. Isi Dropdown Bulan
               let opt = '';
               if(res.data.bulanan.length === 0) {
                  opt = '<option value="">Belum ada data</option>';
@@ -592,11 +598,13 @@
               }
               document.getElementById('filterBulanLaporan').innerHTML = opt;
               
-              // 2. Tampilkan Laporan Bulan Teratas (Terbaru)
               renderLaporanPilihan();
+          } else {
+              document.getElementById('listLaporanContainer').innerHTML = `<p class="text-danger text-center">Ditolak Server: ${res.pesan}</p>`;
           }
        }).catch(e => {
-           document.getElementById('listLaporanContainer').innerHTML = `<p class="text-danger text-center">Gagal memuat data laporan.</p>`;
+           console.error("DETAIL ERROR:", e);
+           document.getElementById('listLaporanContainer').innerHTML = `<p class="text-danger text-center"><i class="bi bi-exclamation-circle text-danger fs-3"></i><br>Error JavaScript. Coba muat ulang halaman.</p>`;
        });
     }
 
