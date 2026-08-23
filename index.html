@@ -142,6 +142,7 @@
           <button class="tab-btn" id="bTab_tunai" onclick="switchTabKasir('tunai')">Bayar Tunai</button>
           <button class="tab-btn" id="bTab_tunggak" onclick="switchTabKasir('tunggak')">Radar Tunggakan</button>
           <button class="tab-btn" id="bTab_riwayat" onclick="switchTabKasir('riwayat')">Buku Besar</button>
+          <button class="tab-btn" id="bTab_laporan" onclick="switchTabKasir('laporan')">Laporan Bulanan</button>
       </div>
       
       <div id="kTab_validasi" style="display:block;"><div id="listValidasiContainer"></div></div>
@@ -166,9 +167,10 @@
          <div id="listTunggakanContainer"></div>
       </div>
       
-      <div id="kTab_riwayat" style="display:none;">
-          <input type="text" class="form-control py-3 border-0 shadow-sm rounded-pill px-4 mb-4" id="cariRiwayat" placeholder="🔍 Cari Nama / Invoice..." onkeyup="filterRiwayat()">
-          <div id="listRiwayatContainer"></div>
+      <!-- SUB-TAB BARU: LAPORAN KEUANGAN BULANAN -->
+      <div id="kTab_laporan" style="display:none;">
+         <div class="alert alert-info border-0 shadow-sm rounded-4 mb-3"><h6 class="fw-bold mb-0 text-dark"><i class="bi bi-bar-chart-line-fill text-info me-2"></i>Rekap Keuangan</h6><small class="text-muted">Total pendapatan valid per bulan.</small></div>
+         <div id="listLaporanContainer"></div>
       </div>
     </div>
 
@@ -380,7 +382,7 @@
             if(dataUserGlobal.user.role.toLowerCase().includes('yayasan')) {
                 document.getElementById('bTab_validasi').style.display = 'none';
                 document.getElementById('bTab_tunai').style.display = 'none';
-                switchTabKasir('tunggak'); // Langsung buka halaman Tunggakan
+                switchTabKasir('laporan'); // Yayasan langsung disuguhi Laporan Bulanan
             } else {
                 document.getElementById('bTab_validasi').style.display = 'inline-block';
                 document.getElementById('bTab_tunai').style.display = 'inline-block';
@@ -491,10 +493,33 @@
 
     // ================= KASIR BENDAHARA (4 TAB) =================
     function switchTabKasir(tab) {
-        document.querySelectorAll('#areaKasirBendahara .tab-btn').forEach(b => b.classList.remove('active')); document.getElementById('bTab_' + tab).classList.add('active');
-        ['validasi', 'tunai', 'tunggak', 'riwayat'].forEach(t => document.getElementById('kTab_' + t).style.display = 'none');
-        document.getElementById('kTab_' + tab).style.display = 'block';
-        if(tab==='validasi') loadValidasiKasir(); else if(tab==='tunggak') loadTunggakan(); else if(tab==='riwayat') loadRiwayatGlobal();
+        document.querySelectorAll('#areaKasirBendahara .tab-btn').forEach(b => b.classList.remove('active')); 
+        let btn = document.getElementById('bTab_' + tab); if(btn) btn.classList.add('active');
+        
+        ['validasi', 'tunai', 'tunggak', 'riwayat', 'laporan'].forEach(t => { let el = document.getElementById('kTab_' + t); if(el) el.style.display = 'none'; });
+        let targetEl = document.getElementById('kTab_' + tab); if(targetEl) targetEl.style.display = 'block';
+        
+        if(tab==='validasi') loadValidasiKasir(); 
+        else if(tab==='tunggak') loadTunggakan(); 
+        else if(tab==='riwayat') loadRiwayatGlobal(); 
+        else if(tab==='laporan') loadLaporanBulanan();
+    }
+
+    function loadLaporanBulanan() {
+       document.getElementById('listLaporanContainer').innerHTML = `<div class="text-center py-4"><div class="spinner-border text-info"></div></div>`;
+       fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_laporan_keuangan', idDbFinance: dataUserGlobal.tenant.idDbFinance }) })
+       .then(r=>r.json()).then(res=>{
+          if(res.status === 'success') {
+              if(res.data.length === 0) return document.getElementById('listLaporanContainer').innerHTML = `<p class="text-center text-muted">Belum ada pendapatan tervalidasi.</p>`;
+              let html = "";
+              res.data.forEach(lap => {
+                 let rincianHTML = "";
+                 for (const [kat, nom] of Object.entries(lap.rincian)) { rincianHTML += `<div class="d-flex justify-content-between mb-1 border-bottom pb-1"><small class="text-muted">${kat}</small><small class="fw-bold text-dark">${rupiah(nom)}</small></div>`; }
+                 html += `<div class="bg-white p-3 rounded-4 shadow-sm mb-3 border-start border-4 border-info"><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="fw-bold text-dark mb-0"><i class="bi bi-calendar-event text-info me-2"></i>Bulan: ${lap.label}</h6><h5 class="fw-bold text-info mb-0">${rupiah(lap.total)}</h5></div><div class="bg-light p-2 rounded-3 mt-3"><p class="small fw-bold text-dark mb-2">Rincian Pendapatan:</p>${rincianHTML}</div></div>`;
+              });
+              document.getElementById('listLaporanContainer').innerHTML = html;
+          }
+       });
     }
 
     function loadValidasiKasir() {
