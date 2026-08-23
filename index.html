@@ -481,15 +481,14 @@
        });
     }
 
-    // ==== PERBAIKAN PENCARIAN TUNAI (SMART DATALIST) ====
+    // ==== PERBAIKAN PENCARIAN TUNAI (HANYA YANG PUNYA TAGIHAN & URUT TANGGAL) ====
     function fetchSiswaTunai() {
-       fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_siswa', tenantDbId: dataUserGlobal.tenant.idDatabase }) })
+       // Panggil API baru yang cuma memuat siswa penunggak / belum bayar
+       fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_siswa_kasir', tenantDbId: dataUserGlobal.tenant.idDatabase, idDbFinance: dataUserGlobal.tenant.idDbFinance }) })
        .then(r=>r.json()).then(res=>{ 
           if(res.status === 'success') {
               dataSemuaSiswa = res.data;
               let opt = ''; 
-              // Sekarang SEMUA siswa (termasuk anak TK tanpa NISN) akan muncul!
-              // Value murni menggunakan Nama agar rapi saat dipilih Bendahara
               res.data.forEach(s => { 
                   let infoNisn = s.nisn !== "-" ? ` | NISN: ${s.nisn}` : ` | Anak TK`;
                   opt += `<option value="${s.nama}">Kelas ${s.rombel}${infoNisn}</option>`; 
@@ -503,8 +502,6 @@
        let val = document.getElementById('cariSiswaTunai').value.trim(); 
        if(val === "") return; 
        
-       // Mesin hanya akan menembak data ke server JIKA Bendahara sudah memilih nama yang valid
-       // Ini mencegah loading terus-menerus saat Bendahara baru mengetik 1 huruf
        let targetSiswa = dataSemuaSiswa.find(s => s.nama.toLowerCase() === val.toLowerCase() || s.nisn.toLowerCase() === val.toLowerCase());
        if(!targetSiswa) return; 
 
@@ -513,7 +510,7 @@
        
        invoiceDipilih = []; totalTagihanDipilih = 0; 
        document.getElementById('barCheckoutTunai').style.display='none';
-       document.getElementById('listTagihanTunaiContainer').innerHTML = `<div class="text-center py-4"><div class="spinner-border text-primary"></div><p class="small text-muted mt-2">Mencari tagihan...</p></div>`;
+       document.getElementById('listTagihanTunaiContainer').innerHTML = `<div class="text-center py-4"><div class="spinner-border text-primary"></div><p class="small text-muted mt-2">Menyusun urutan tagihan...</p></div>`;
        
        fetch(API_URL, { 
            method: "POST", 
@@ -521,13 +518,18 @@
        })
        .then(r=>r.json()).then(res=>{
           if(res.status === 'success') {
+              // 1. Ambil hanya yang "Belum Bayar"
+              let tagihanAktif = res.data.filter(i => i.status && i.status.toLowerCase().includes("belum bayar"));
+              
+              // 2. MENGURUTKAN BERDASARKAN JATUH TEMPO (Terdekat di posisi paling atas / Termin 1, 2, 3...)
+              tagihanAktif.sort((a, b) => parseDate(a.batas_waktu) - parseDate(b.batas_waktu));
+
               let html = ""; 
-              res.data.forEach(i => { 
-                  if(i.status && i.status.toLowerCase().includes("belum bayar")) { 
-                      html += `<div class="d-flex justify-content-between align-items-center bg-white p-3 mb-2 rounded-3 shadow-sm border border-light"><div><input type="checkbox" class="form-check-input me-3 border-primary" style="transform: scale(1.3);" value="${i.id_invoice}" data-nom="${i.sisa_tagihan}" onchange="kalkulasiTunai(this)"><b class="text-dark">${i.rincian}</b><br><small class="text-danger" style="margin-left: 28px;">Jatuh Tempo: ${i.batas_waktu}</small></div><div class="fw-bold text-dark fs-6">${rupiah(i.sisa_tagihan)}</div></div>`; 
-                  } 
+              tagihanAktif.forEach(i => { 
+                  html += `<div class="d-flex justify-content-between align-items-center bg-white p-3 mb-2 rounded-3 shadow-sm border border-light"><div><input type="checkbox" class="form-check-input me-3 border-primary" style="transform: scale(1.3);" value="${i.id_invoice}" data-nom="${i.sisa_tagihan}" onchange="kalkulasiTunai(this)"><b class="text-dark">${i.rincian}</b><br><small class="text-danger" style="margin-left: 28px;">Jatuh Tempo: ${i.batas_waktu}</small></div><div class="fw-bold text-dark fs-6">${rupiah(i.sisa_tagihan)}</div></div>`; 
               }); 
-              document.getElementById('listTagihanTunaiContainer').innerHTML = html === "" ? `<div class="alert alert-success border-0 shadow-sm rounded-4 text-center mt-3"><i class="bi bi-shield-check fs-1"></i><br><b>Aman!</b> Siswa ini tidak memiliki tunggakan / Lunas.</div>` : html;
+              
+              document.getElementById('listTagihanTunaiContainer').innerHTML = html === "" ? `<div class="alert alert-success border-0 shadow-sm rounded-4 text-center mt-3"><i class="bi bi-shield-check fs-1"></i><br><b>Aman!</b> Siswa ini sudah Lunas seluruhnya.</div>` : html;
           } else {
               document.getElementById('listTagihanTunaiContainer').innerHTML = `<p class='text-danger text-center'>Gagal memuat tagihan.</p>`;
           }
