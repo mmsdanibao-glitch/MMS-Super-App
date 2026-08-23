@@ -481,22 +481,112 @@
        });
     }
 
+    // ==== 1. PERBAIKAN PENCARIAN TUNAI (LIVE SEARCH) ====
     function fetchSiswaTunai() {
-       fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_siswa', tenantDbId: dataUserGlobal.tenant.idDatabase }) }).then(r=>r.json()).then(res=>{ 
-          let opt = ''; res.data.forEach(s => { if(s.nisn!=="-") opt += `<option value="${s.nisn}_${s.nama}">Kelas ${s.rombel}</option>`; }); 
-          document.getElementById('listSiswaTunai').innerHTML = opt;
+       fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_siswa', tenantDbId: dataUserGlobal.tenant.idDatabase }) })
+       .then(r=>r.json()).then(res=>{ 
+          if(res.status === 'success') {
+              dataSemuaSiswa = res.data;
+              let opt = ''; 
+              res.data.forEach(s => { 
+                  if(s.nisn !== "-") {
+                      // Format teks yang ramah dibaca di Datalist
+                      opt += `<option value="${s.nisn}_${s.nama}">${s.nama} - Kelas ${s.rombel}</option>`; 
+                  }
+              }); 
+              document.getElementById('listSiswaTunai').innerHTML = opt;
+          }
        });
     }
 
     function tarikTagihanTunai() {
-       let val = document.getElementById('cariSiswaTunai').value; if(!val.includes('_')) return; 
-       let parts = val.split('_'); invoiceDipilih = []; totalTagihanDipilih = 0; document.getElementById('barCheckoutTunai').style.display='none';
-       document.getElementById('listTagihanTunaiContainer').innerHTML = `<div class="text-center"><div class="spinner-border text-primary"></div></div>`;
-       fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_tagihan_anak', idDbFinance: dataUserGlobal.tenant.idDbFinance, nisn: parts[0], nama: parts[1] }) }).then(r=>r.json()).then(res=>{
-          let html = ""; res.data.forEach(i=>{ if(i.status === "Belum Bayar") { html += `<div class="d-flex justify-content-between align-items-center bg-white p-3 mb-2 rounded-3 shadow-sm border"><div><input type="checkbox" class="form-check-input me-2 border-primary" value="${i.id_invoice}" data-nom="${i.sisa_tagihan}" onchange="kalkulasiTunai(this)"><b>${i.rincian}</b><br><small class="text-danger ms-4">Jatuh Tempo: ${i.batas_waktu}</small></div><div class="fw-bold text-dark">${rupiah(i.sisa_tagihan)}</div></div>`; } }); 
-          document.getElementById('listTagihanTunaiContainer').innerHTML = html===""?"<p class='text-muted text-center'>Lunas semua.</p>":html;
+       let val = document.getElementById('cariSiswaTunai').value; 
+       if(!val || !val.includes('_')) return; 
+       
+       let parts = val.split('_'); 
+       let nisnTarget = parts[0];
+       let namaTarget = parts.slice(1).join('_'); // Mengantisipasi nama yang ada garis bawahnya
+       
+       invoiceDipilih = []; totalTagihanDipilih = 0; 
+       document.getElementById('barCheckoutTunai').style.display='none';
+       document.getElementById('listTagihanTunaiContainer').innerHTML = `<div class="text-center py-3"><div class="spinner-border text-primary"></div></div>`;
+       
+       fetch(API_URL, { 
+           method: "POST", 
+           body: JSON.stringify({ action: 'get_tagihan_anak', idDbFinance: dataUserGlobal.tenant.idDbFinance, nisn: nisnTarget, nama: namaTarget }) 
+       })
+       .then(r=>r.json()).then(res=>{
+          if(res.status === 'success') {
+              let html = ""; 
+              res.data.forEach(i => { 
+                  if(i.status && i.status.toLowerCase().includes("belum bayar")) { 
+                      html += `<div class="d-flex justify-content-between align-items-center bg-white p-3 mb-2 rounded-3 shadow-sm border"><div><input type="checkbox" class="form-check-input me-2 border-primary" value="${i.id_invoice}" data-nom="${i.sisa_tagihan}" onchange="kalkulasiTunai(this)"><b>${i.rincian}</b><br><small class="text-danger ms-4">Jatuh Tempo: ${i.batas_waktu}</small></div><div class="fw-bold text-dark">${rupiah(i.sisa_tagihan)}</div></div>`; 
+                  } 
+              }); 
+              document.getElementById('listTagihanTunaiContainer').innerHTML = html === "" ? "<p class='text-muted text-center py-3'>Tidak ada tagihan aktif (Lunas).</p>" : html;
+          } else {
+              document.getElementById('listTagihanTunaiContainer').innerHTML = `<p class='text-danger text-center'>Gagal memuat tagihan.</p>`;
+          }
+       }).catch(err => {
+           document.getElementById('listTagihanTunaiContainer').innerHTML = `<p class='text-danger text-center'>Kesalahan Jaringan.</p>`;
        });
     }
+
+    // ==== 2. PERBAIKAN RADAR TUNGGAKAN (ANTI-LOADING) ====
+    function loadTunggakan() {
+       const wadah = document.getElementById('listTunggakanContainer'); 
+       wadah.innerHTML = `<div class="text-center py-4"><div class="spinner-border text-danger"></div></div>`;
+       document.getElementById('cariTunggak').value = ""; 
+       document.getElementById('cbTunggakanAll').checked = false;
+       
+       fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_tunggakan', idDbFinance: dataUserGlobal.tenant.idDbFinance }) })
+       .then(r=>r.json()).then(res=>{
+          if(res.status === 'success') {
+              if(!res.data || res.data.length === 0) { 
+                  wadah.innerHTML = `<p class="text-center text-success py-4"><i class="bi bi-emoji-smile fs-3"></i><br>Bersih! Tidak ada siswa yang menunggak.</p>`; 
+                  return; 
+              }
+              tunggakanRaw = res.data; 
+              renderTunggakan(tunggakanRaw);
+          } else {
+              wadah.innerHTML = `<p class="text-center text-danger">Gagal memuat data tunggakan: ${res.pesan}</p>`;
+          }
+       }).catch(err => {
+           wadah.innerHTML = `<p class="text-center text-danger">Kesalahan koneksi server.</p>`;
+       });
+    }
+
+    function renderTunggakan(dataArr) {
+        let html = ""; 
+        dataArr.forEach((s) => { 
+            let jsonStr = encodeURIComponent(JSON.stringify({nama: s.nama, nisn: s.nisn, total: s.totalTunggakan, rincianArr: s.listTagihan}));
+            let rincianUi = "• " + s.listTagihan.join('<br>• ');
+            
+            html += `<div class="bg-white p-3 rounded-4 shadow-sm mb-3 border-start border-4 border-danger card-tunggak">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="d-flex gap-2">
+                        <input type="checkbox" class="form-check-input cb-tunggak-item mt-1 border-danger" style="transform: scale(1.2);" value="${jsonStr}">
+                        <div>
+                            <h6 class="fw-bold mb-0 text-dark">${s.nama}</h6>
+                            <small class="text-muted">${s.listTagihan.length} Tagihan Lewat Batas</small>
+                        </div>
+                    </div>
+                    <div class="fw-bold text-danger fs-5">${rupiah(s.totalTunggakan)}</div>
+                </div>
+                <div class="mt-2 text-muted ms-4" style="font-size:0.8rem; line-height: 1.6;">${rincianUi}</div>
+            </div>`; 
+        }); 
+        document.getElementById('listTunggakanContainer').innerHTML = html;
+    }
+
+    function filterTunggakan() {
+        let input = document.getElementById('cariTunggak').value.toLowerCase(); 
+        let filtered = tunggakanRaw.filter(s => s.nama.toLowerCase().includes(input));
+        renderTunggakan(filtered); 
+        document.getElementById('cbTunggakanAll').checked = false;
+    }
+
+    
 
     function kalkulasiTunai(cb) {
        if(cb.checked) { invoiceDipilih.push(cb.value); totalTagihanDipilih += parseInt(cb.getAttribute('data-nom')); } 
@@ -510,14 +600,7 @@
        });
     }
 
-    function loadTunggakan() {
-       const wadah = document.getElementById('listTunggakanContainer'); wadah.innerHTML = `<div class="text-center"><div class="spinner-border text-danger"></div></div>`;
-       document.getElementById('cariTunggak').value = ""; document.getElementById('cbTunggakanAll').checked = false;
-       fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_tunggakan', idDbFinance: dataUserGlobal.tenant.idDbFinance }) }).then(r=>r.json()).then(res=>{
-          if(res.data.length===0) return wadah.innerHTML = `<p class="text-center text-success"><i class="bi bi-emoji-smile"></i> Bersih! Tidak ada yang nunggak.</p>`;
-          tunggakanRaw = res.data; renderTunggakan(tunggakanRaw);
-       });
-    }
+    
 
     // =========================================================
 // MESIN TUNGGAKAN: DILENGKAPI RINCIAN NOMINAL PER ITEM
