@@ -658,7 +658,15 @@
         fetch(API_URL, { method: "POST", body: JSON.stringify({action: 'tambah_master_tarif', idDbFinance: dataUserGlobal.tenant.idDbFinance, data: payload}) })
         .then(r => r.json()).then(res => { 
             btn.innerHTML = 'Simpan Tarif'; btn.disabled = false; 
-            if(res.status === 'success') { document.getElementById('modalTambahTarif').style.display = 'none'; Toast.fire({icon: 'success', title: 'Tarif Disimpan'}); persiapanBuatKontrak(); } 
+            if(res.status === 'success') { 
+                document.getElementById('modalTambahTarif').style.display = 'none'; 
+                
+                // INI SAPU PEMBERSIHNYA MAS BRO:
+                document.getElementById('formTambahTarif').reset(); 
+                
+                Toast.fire({icon: 'success', title: 'Tarif Disimpan'}); 
+                persiapanBuatKontrak(); 
+            } 
             else { SwalMin.fire({title:'Gagal', text:res.pesan, icon:'error'}); }
         });
     });
