@@ -24,6 +24,7 @@
     .kategori-header { background: #f8f9fc; padding: 15px; border-radius: 12px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid #eee; }
     .swal2-popup.minimalis-popup { width: 300px !important; padding: 20px !important; border-radius: 20px !important; }
     .btn-drop-nanti { width: 100%; border: 2px dashed #ccc; background: transparent; color: #777; font-weight: bold; border-radius: 10px; padding: 10px; margin-top: 10px; }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
   </style>
 </head>
 <body>
@@ -33,8 +34,9 @@
     <div style="background: white; border-radius: 24px; padding: 3rem 2rem; width: 100%; max-width: 380px; margin: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
       <h3 class="fw-bold mb-1 text-center" style="color: var(--warna-tema);">Portal NCIPS</h3>
       <form id="formLoginUtama" class="mt-4">
-        <input type="email" class="form-control mb-3 p-3 rounded-4 bg-light border-0" id="loginEmail" required placeholder="Email">
-        <input type="password" class="form-control mb-4 p-3 rounded-4 bg-light border-0" id="loginPassword" required placeholder="Sandi">
+        <!-- Autocomplete ditambahkan agar aman dari Error Console Chrome -->
+        <input type="email" class="form-control mb-3 p-3 rounded-4 bg-light border-0" id="loginEmail" required placeholder="Email" autocomplete="username">
+        <input type="password" class="form-control mb-4 p-3 rounded-4 bg-light border-0" id="loginPassword" required placeholder="Sandi" autocomplete="current-password">
         <button type="submit" id="btnLogin" class="btn-emboss">Masuk</button>
       </form>
     </div>
@@ -74,30 +76,28 @@
       <!-- Checkout Bar -->
       <div id="barCheckout" style="position:fixed; bottom:0; left:0; width:100%; background:white; padding:15px 20px; box-shadow:0 -5px 20px rgba(0,0,0,0.1); display:none; justify-content:space-between; align-items:center; z-index:100;">
          <div><small class="text-muted">Total:</small><div class="fw-bold text-danger fs-5" id="lblTotalCheckout">Rp 0</div></div>
-         <button class="btn btn-danger fw-bold rounded-4 px-4 shadow-sm" onclick="alert('Buka Modal Upload TF disini')">Bayar (<span id="lblCountCheckout">0</span>)</button>
+         <button class="btn btn-danger fw-bold rounded-4 px-4 shadow-sm" onclick="bukaModalMultiBayar()">Bayar (<span id="lblCountCheckout">0</span>)</button>
       </div>
     </div>
 
-    <!-- AREA KASIR BENDAHARA (DENGAN 4 TAB BARU!) -->
+    <!-- AREA KASIR BENDAHARA -->
     <div id="areaKasirBendahara" style="display: none; padding: 15px;">
       <div class="tab-keuangan mb-4">
           <button class="tab-btn active" id="bTab_validasi" onclick="switchTabKasir('validasi')">Validasi Transfer</button>
           <button class="tab-btn" id="bTab_tunai" onclick="switchTabKasir('tunai')">Bayar Tunai</button>
           <button class="tab-btn" id="bTab_tunggak" onclick="switchTabKasir('tunggak')">Radar Tunggakan</button>
-          <button class="tab-btn" id="bTab_riwayat" onclick="switchTabKasir('riwayat')">Buku Besar / Riwayat</button>
+          <button class="tab-btn" id="bTab_riwayat" onclick="switchTabKasir('riwayat')">Buku Besar</button>
       </div>
       
       <!-- SUB-TAB: VALIDASI -->
-      <div id="kTab_validasi" style="display:block;">
-         <div id="listValidasiContainer"></div>
-      </div>
+      <div id="kTab_validasi" style="display:block;"><div id="listValidasiContainer"></div></div>
 
       <!-- SUB-TAB: BAYAR TUNAI (POS LOKET) -->
       <div id="kTab_tunai" style="display:none;">
          <div class="alert alert-primary border-0 shadow-sm rounded-4"><h6 class="fw-bold mb-0"><i class="bi bi-wallet2 me-2"></i>Kasir Loket (Tunai)</h6></div>
          <select class="form-select py-3 border-0 shadow-sm rounded-4 mb-3 fw-bold" id="selSiswaTunai" onchange="tarikTagihanTunai()"><option value="">-- Ketik/Pilih Nama Siswa --</option></select>
          <div id="listTagihanTunaiContainer"></div>
-         <div id="barCheckoutTunai" style="display:none; position:fixed; bottom:0; left:0; width:100%; background:white; padding:15px; box-shadow:0 -5px 10px rgba(0,0,0,0.1); justify-content:space-between; align-items:center;">
+         <div id="barCheckoutTunai" style="display:none; position:fixed; bottom:0; left:0; width:100%; background:white; padding:15px; box-shadow:0 -5px 10px rgba(0,0,0,0.1); justify-content:space-between; align-items:center; z-index:100;">
              <div class="fw-bold text-success fs-5" id="lblTotalTunai">Rp 0</div>
              <button class="btn btn-success fw-bold rounded-4 px-4" onclick="prosesBayarTunai()">Terima Tunai</button>
          </div>
@@ -109,7 +109,7 @@
          <div id="listTunggakanContainer"></div>
       </div>
 
-      <!-- SUB-TAB: RIWAYAT GLOBAL & CETAK -->
+      <!-- SUB-TAB: RIWAYAT GLOBAL -->
       <div id="kTab_riwayat" style="display:none;">
          <input type="text" class="form-control py-3 border-0 shadow-sm rounded-4 mb-4" id="cariRiwayat" placeholder="🔍 Cari Nama / Invoice..." onkeyup="filterRiwayat()">
          <div id="listRiwayatContainer"></div>
@@ -117,11 +117,43 @@
     </div>
   </div>
 
+  <!-- MODAL MULTI CHECKOUT (ORTU) -->
+  <div class="modal-overlay-custom" id="modalMultiBayar" style="align-items: flex-end;">
+    <div class="modal-content-custom text-start" style="border-radius: 30px 30px 0 0; width: 100%; max-width: 600px; padding: 30px 20px; animation: slideUp 0.3s ease;">
+      <h5 class="fw-bold text-dark mb-3"><i class="bi bi-wallet2 text-danger me-2"></i>Pembayaran Tagihan</h5>
+      <p class="small text-muted mb-3">Membayar <b id="lblJmlTagihanMdl" class="text-dark">0</b> tagihan senilai <b id="lblTotalMdl" class="text-danger">Rp 0</b>.</p>
+      
+      <div class="mb-3">
+         <label class="form-label text-dark">Pilih Bank Tujuan Transfer:</label>
+         <select class="form-select fw-bold bg-light border-0 py-3 shadow-sm" id="selBankTujuan" onchange="tampilkanNoRek()" required><option value="">-- Memuat Bank... --</option></select>
+      </div>
+      
+      <div class="alert alert-secondary border-0 rounded-4 text-center py-3 mb-4" id="boxNoRek" style="display: none;">
+         <p class="small text-muted mb-1">Silakan transfer ke rekening berikut:</p>
+         <h3 class="fw-bold text-dark mb-1" id="teksNoRek" style="letter-spacing: 2px;">12345</h3>
+         <p class="small text-muted fw-bold mb-2" id="teksAtasNama">a.n. Yayasan</p>
+         <button class="btn btn-sm btn-outline-dark fw-bold rounded-pill px-3" onclick="copyRekening()"><i class="bi bi-clipboard"></i> Salin Rekening</button>
+      </div>
+
+      <form id="formUploadMultiBayar">
+         <label class="file-upload-box w-100 border-danger shadow-sm mb-4" id="boxBuktiTFMulti" style="border: 2px dashed #dc3545; display:block; padding: 20px; text-align: center; border-radius: 12px; cursor: pointer;">
+            <i class="bi bi-receipt fs-1 text-danger" id="ikonBuktiTFMulti"></i>
+            <p class="small fw-bold mt-2 mb-0 text-danger" id="teksBuktiTFMulti">Upload Bukti Transfer</p>
+            <input type="file" id="fileBuktiTFMulti" accept="image/*,application/pdf" onchange="previewFile('fileBuktiTFMulti', 'ikonBuktiTFMulti', 'teksBuktiTFMulti')" style="display:none;" required>
+         </label>
+         <div class="d-flex gap-2">
+            <button type="button" class="btn btn-light w-50 py-3 fw-bold rounded-4" onclick="document.getElementById('modalMultiBayar').style.display='none'">Batal</button>
+            <button type="submit" id="btnKirimMulti" class="btn btn-danger w-50 py-3 fw-bold rounded-4 shadow-sm">Kirim Bukti</button>
+         </div>
+      </form>
+    </div>
+  </div>
+
   <script>
-    let dataUserGlobal = null; let dataAnakOrtu = []; let dataSemuaSiswa = [];
+    let dataUserGlobal = null; let dataAnakOrtu = []; let dataSemuaSiswa = []; let bankAccounts = [];
     let invoiceDipilih = []; let totalTagihanDipilih = 0;
     
-    // API SAKTI MAS BRO
+    // MASUKKAN API URL DISINI!
     const API_URL = "https://script.google.com/macros/s/AKfycbylQ9H01zpU-NP5B_yqUgyWMGPD_ECdvnFT7SS_iUUWDhKNMfSJOxFwGSGpDekvt9KjWw/exec";
 
     const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
@@ -133,8 +165,11 @@
     document.getElementById('formLoginUtama').addEventListener('submit', function(e) { 
         e.preventDefault(); Swal.showLoading();
         fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'login', email: document.getElementById('loginEmail').value, password: document.getElementById('loginPassword').value }) })
-        .then(r=>r.json()).then(res=>{ Swal.close(); if(res.status==='success'){ dataUserGlobal=res; renderMenu(); } else SwalMin.fire('Gagal', res.pesan, 'error'); }); 
+        .then(r=>r.json()).then(res=>{ Swal.close(); if(res.status==='success'){ dataUserGlobal=res; renderMenu(); } else SwalMin.fire('Gagal', res.pesan, 'error'); })
+        .catch(err => { Swal.close(); SwalMin.fire('Error', 'Server Google menolak koneksi. Cek URL API atau Setelan Deploy.', 'error'); }); 
     });
+
+    function logout() { SwalMin.fire({title: 'Keluar?', icon: 'question', showCancelButton: true, confirmButtonText: 'Ya', cancelButtonText: 'Batal'}).then((r) => { if(r.isConfirmed) { localStorage.removeItem('sesiPortalNCIPS'); window.top.location.reload(); }}); }
 
     function renderMenu() {
         document.getElementById('halamanLogin').style.display = 'none'; document.getElementById('halamanDashboard').style.display = 'block';
@@ -160,12 +195,14 @@
     }
     function tutupModul() { document.getElementById('halamanModul').style.display = 'none'; document.getElementById('halamanDashboard').style.display = 'block'; }
 
-    // ================= FITUR 1: E-BANKING ORTU (SMART FILTER) =================
+    // ================= E-BANKING ORTU =================
     function fetchAnak() {
        fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_siswa_ortu', tenantDbId: dataUserGlobal.tenant.idDatabase, email: dataUserGlobal.user.email }) }).then(r=>r.json()).then(res=>{ 
           dataAnakOrtu = res.data; let ddl = document.getElementById('pilihAnakKeuangan'); ddl.innerHTML = '<option value="">-- Pilih Anak --</option>'; 
           dataAnakOrtu.forEach((a,i) => ddl.innerHTML += `<option value="${i}">${a.nama}</option>`);
           if(dataAnakOrtu.length===1) { ddl.value="0"; tarikTagihan(); }
+          
+          fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_rekening', idDbFinance: dataUserGlobal.tenant.idDbFinance }) }).then(r=>r.json()).then(rs=>{ if(rs.status==='success') bankAccounts = rs.data; });
        });
     }
 
@@ -180,11 +217,12 @@
        const idx = document.getElementById('pilihAnakKeuangan').value; if(idx==="") return;
        document.getElementById('tabNavKeuangan').style.display = 'flex'; switchTabOrtu('tagihan');
        document.getElementById('tabContent_tagihan').innerHTML = `<div class="text-center mt-5"><div class="spinner-border text-danger"></div></div>`;
+       invoiceDipilih = []; totalTagihanDipilih = 0; updateCheckoutBar();
        
        fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_tagihan_anak', idDbFinance: dataUserGlobal.tenant.idDbFinance, nisn: dataAnakOrtu[idx].nisn, nama: dataAnakOrtu[idx].nama }) })
        .then(r=>r.json()).then(res=>{
            let htmlRiwayat = ""; let groupedKini = {}; let groupedNanti = {}; 
-           let now = new Date(); let akhirBulanIni = new Date(now.getFullYear(), now.getMonth() + 1, 0); // Tgl terakhir bulan ini
+           let now = new Date(); let akhirBulanIni = new Date(now.getFullYear(), now.getMonth() + 1, 0); 
            
            res.data.forEach(i => {
                if(i.status.includes("Lunas")) {
@@ -193,42 +231,38 @@
                    htmlRiwayat = `<div class="bg-white p-3 rounded-4 shadow-sm mb-3 border-start border-4 border-warning"><div class="d-flex justify-content-between mb-1"><h6 class="fw-bold mb-0">${i.rincian}</h6><div class="spinner-border spinner-border-sm text-warning"></div></div><div class="text-muted small">Sedang divalidasi Bendahara</div></div>` + htmlRiwayat;
                } else {
                    let due = parseDate(i.batas_waktu); let kat = i.rincian.split(' (')[0];
-                   // FILTER MASA KINI VS MASA DEPAN
                    if (due <= akhirBulanIni) { if(!groupedKini[kat]) groupedKini[kat]=[]; groupedKini[kat].push(i); } 
                    else { if(!groupedNanti[kat]) groupedNanti[kat]=[]; groupedNanti[kat].push(i); }
                }
            });
 
-           let htmlTagihan = `<h6 class="fw-bold text-dark mt-2 mb-3"><i class="bi bi-exclamation-circle text-danger me-2"></i>Tagihan Bulan Ini & Tunggakan</h6>`;
-           
-           // Render Kini
-           if(Object.keys(groupedKini).length === 0) htmlTagihan += `<div class="alert alert-success border-0 rounded-4"><i class="bi bi-emoji-smile-fill me-2"></i>Aman! Tidak ada tunggakan.</div>`;
+           let htmlTagihan = `<h6 class="fw-bold text-dark mt-2 mb-3"><i class="bi bi-exclamation-circle text-danger me-2"></i>Tagihan Aktif</h6>`;
+           if(Object.keys(groupedKini).length === 0) htmlTagihan += `<div class="alert alert-success border-0 rounded-4"><i class="bi bi-emoji-smile-fill me-2"></i>Aman! Tidak ada tagihan bulan ini.</div>`;
            else htmlTagihan += renderLaciKategori(groupedKini, true);
 
-           // Render Nanti (Sembunyi dalam Dropdown)
            let countNanti = Object.values(groupedNanti).flat().length;
            if(countNanti > 0) {
-               htmlTagihan += `<button class="btn-drop-nanti mt-4" onclick="document.getElementById('boxNanti').style.display='block'; this.style.display='none';"><i class="bi bi-chevron-down"></i> Tampilkan ${countNanti} Tagihan Bulan Berikutnya</button>`;
-               htmlTagihan += `<div id="boxNanti" style="display:none;" class="mt-3"><h6 class="fw-bold text-muted mb-3"><i class="bi bi-calendar-plus me-2"></i>Tagihan Masa Depan</h6>${renderLaciKategori(groupedNanti, false)}</div>`;
+               htmlTagihan += `<button class="btn-drop-nanti mt-4" onclick="document.getElementById('boxNanti').style.display='block'; this.style.display='none';"><i class="bi bi-chevron-down"></i> Tampilkan ${countNanti} Tagihan Berikutnya</button>`;
+               htmlTagihan += `<div id="boxNanti" style="display:none;" class="mt-3"><h6 class="fw-bold text-muted mb-3"><i class="bi bi-calendar-plus me-2"></i>Masa Depan</h6>${renderLaciKategori(groupedNanti, false)}</div>`;
            }
 
            document.getElementById('tabContent_tagihan').innerHTML = htmlTagihan;
-           document.getElementById('tabContent_riwayat').innerHTML = htmlRiwayat === "" ? "<p class="text-center text-muted">Belum ada riwayat.</p>" : htmlRiwayat;
+           // PERBAIKAN STRING QUOTES "Belum ada riwayat" DISINI!
+           document.getElementById('tabContent_riwayat').innerHTML = htmlRiwayat === "" ? "<p class='text-center text-muted'>Belum ada riwayat.</p>" : htmlRiwayat;
        });
     }
 
     function renderLaciKategori(groupedObj, isKini) {
         let html = "";
         for (const [kat, list] of Object.entries(groupedObj)) {
-            // Urutkan List berdasarkan tanggal (Terdekat di atas)
             list.sort((a,b) => parseDate(a.batas_waktu) - parseDate(b.batas_waktu));
             let sum = list.reduce((a,b)=>a+parseInt(b.sisa_tagihan), 0);
-            let divId = "kat_" + kat.replace(/\s/g,'') + (isKini?"_kini":"_nanti");
+            let divId = "kat_" + kat.replace(/[^a-zA-Z0-9]/g, '') + (isKini?"_kini":"_nanti");
             
             html += `<div class="bg-white rounded-4 shadow-sm mb-3 overflow-hidden"><div class="kategori-header" onclick="document.getElementById('${divId}').style.display = document.getElementById('${divId}').style.display==='none'?'block':'none'"><div class="fw-bold text-dark">${kat} <span class="badge bg-danger rounded-pill ms-1">${list.length}</span></div><div class="text-danger fw-bold">${rupiah(sum)}</div></div><div id="${divId}" style="display:block; padding: 15px; background:#fdfdfd;">`;
             list.forEach(inv => {
                 let telat = parseDate(inv.batas_waktu) < new Date() ? `<span class="badge bg-danger ms-2">Telat</span>` : `<span class="text-muted small ms-2">Batas: ${inv.batas_waktu}</span>`;
-                html += `<div class="d-flex justify-content-between mb-3 border-bottom pb-2"><div><input type="checkbox" class="form-check-input invoice-checkbox me-2" value="${inv.id_invoice}" data-nominal="${inv.sisa_tagihan}" onchange="kalkulasiCheckout(this)"><b class="text-dark" style="font-size:0.9rem;">${inv.rincian}</b><br>${telat}</div><div class="fw-bold text-danger">${rupiah(inv.sisa_tagihan)}</div></div>`;
+                html += `<div class="d-flex justify-content-between mb-3 border-bottom pb-2"><div><input type="checkbox" class="form-check-input invoice-checkbox me-2 border-danger" value="${inv.id_invoice}" data-nominal="${inv.sisa_tagihan}" onchange="kalkulasiCheckout(this)"><b class="text-dark" style="font-size:0.9rem;">${inv.rincian}</b><br>${telat}</div><div class="fw-bold text-danger">${rupiah(inv.sisa_tagihan)}</div></div>`;
             }); html += `</div></div>`;
         } return html;
     }
@@ -236,39 +270,63 @@
     function kalkulasiCheckout(cb) {
         if(cb.checked) { invoiceDipilih.push(cb.value); totalTagihanDipilih += parseInt(cb.getAttribute('data-nominal')); } 
         else { invoiceDipilih = invoiceDipilih.filter(i => i!==cb.value); totalTagihanDipilih -= parseInt(cb.getAttribute('data-nominal')); }
+        updateCheckoutBar();
+    }
+    
+    function updateCheckoutBar() {
         document.getElementById('lblTotalCheckout').innerText = rupiah(totalTagihanDipilih); document.getElementById('lblCountCheckout').innerText = invoiceDipilih.length;
         document.getElementById('barCheckout').style.display = invoiceDipilih.length > 0 ? 'flex' : 'none';
     }
 
-    // ================= FITUR 2 & 4: KASIR BENDAHARA (4 TAB) =================
+    function bukaModalMultiBayar() {
+        if(invoiceDipilih.length === 0) return Toast.fire({icon: 'warning', title: 'Centang tagihan!'});
+        document.getElementById('lblJmlTagihanMdl').innerText = invoiceDipilih.length; document.getElementById('lblTotalMdl').innerText = rupiah(totalTagihanDipilih);
+        let optBank = '<option value="">-- Pilih Bank --</option>'; bankAccounts.forEach(b => optBank += `<option value='{"rek":"${b.no_rek}","an":"${b.atas_nama}"}'>${b.nama_bank}</option>`); document.getElementById('selBankTujuan').innerHTML = optBank;
+        document.getElementById('boxNoRek').style.display = 'none'; document.getElementById('modalMultiBayar').style.display = 'flex';
+    }
+
+    function tampilkanNoRek() {
+        const val = document.getElementById('selBankTujuan').value; if(val === "") { document.getElementById('boxNoRek').style.display = 'none'; return; }
+        const obj = JSON.parse(val); document.getElementById('teksNoRek').innerText = obj.rek; document.getElementById('teksAtasNama').innerText = "a.n. " + obj.an; document.getElementById('boxNoRek').style.display = 'block';
+    }
+
+    function copyRekening() { navigator.clipboard.writeText(document.getElementById('teksNoRek').innerText); Toast.fire({icon: 'success', title: 'Disalin'}); }
+    function previewFile(inputId, ikonId, teksId) { const f = document.getElementById(inputId).files[0]; if(f){ document.getElementById(ikonId).className="bi bi-check-circle-fill fs-1 text-success"; document.getElementById(teksId).innerText=f.name; document.getElementById(teksId).className="small fw-bold mt-2 mb-0 text-success"; document.getElementById(inputId).parentElement.style.borderColor="#198754"; } }
+    const toBase64 = file => new Promise((resolve, reject) => { const r = new FileReader(); r.readAsDataURL(file); r.onload = () => resolve(r.result); r.onerror = e => reject(e); });
+
+    document.getElementById('formUploadMultiBayar').addEventListener('submit', async function(e) {
+       e.preventDefault(); const btn = document.getElementById('btnKirimMulti'); btn.innerHTML='Mengunggah...'; btn.disabled=true;
+       try { 
+          const base64 = await toBase64(document.getElementById('fileBuktiTFMulti').files[0]);
+          const res = await fetch(API_URL, { method:"POST", body: JSON.stringify({action:'bayar_tagihan_massal', idDbFinance:dataUserGlobal.tenant.idDbFinance, idFolderFinance:dataUserGlobal.tenant.idFolderFinance, idInvoiceArray: invoiceDipilih, fileBukti:base64})}).then(r=>r.json());
+          btn.innerHTML='Kirim Bukti'; btn.disabled=false;
+          if(res.status==='success') { document.getElementById('modalMultiBayar').style.display='none'; document.getElementById('formUploadMultiBayar').reset(); SwalMin.fire({title:'Berhasil!', text:res.pesan, icon:'success'}); tarikTagihan(); }
+          else SwalMin.fire({title:'Gagal', text:res.pesan, icon:'error'});
+       } catch(err) { SwalMin.fire('Error', err.message, 'error'); btn.disabled=false; }
+    });
+
+    // ================= KASIR BENDAHARA (4 TAB) =================
     function switchTabKasir(tab) {
         document.querySelectorAll('#areaKasirBendahara .tab-btn').forEach(b => b.classList.remove('active')); document.getElementById('bTab_' + tab).classList.add('active');
         ['validasi', 'tunai', 'tunggak', 'riwayat'].forEach(t => document.getElementById('kTab_' + t).style.display = 'none');
         document.getElementById('kTab_' + tab).style.display = 'block';
-        
         if(tab==='validasi') loadValidasiKasir(); else if(tab==='tunggak') loadTunggakan(); else if(tab==='riwayat') loadRiwayatGlobal();
     }
 
-    // TAB 1: VALIDASI ONLINE
     function loadValidasiKasir() {
       const wadah = document.getElementById('listValidasiContainer'); wadah.innerHTML = `<div class="text-center"><div class="spinner-border text-success"></div></div>`;
       fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_admin_keuangan', idDbFinance: dataUserGlobal.tenant.idDbFinance }) }).then(r=>r.json()).then(res=>{
          if(res.data.length===0) return wadah.innerHTML = `<p class="text-center mt-3 text-muted">Meja Validasi Bersih.</p>`;
-         let html = ""; res.data.forEach(i => {
-            html += `<div class="bg-white p-3 rounded-4 shadow-sm mb-3 border-start border-4 border-success"><div class="d-flex justify-content-between mb-2"><div><h6 class="fw-bold mb-0">${i.nama}</h6><small class="text-muted">${i.rincian}</small></div><div class="fw-bold text-success">${rupiah(i.total)}</div></div><a href="${i.link_bukti}" target="_blank" class="btn btn-sm btn-light w-100 mb-2 border"><i class="bi bi-search"></i> Cek Struk Transfer</a><button class="btn btn-sm btn-success w-100 fw-bold" onclick="eksekusiValidasi('${i.id_invoice}')"><i class="bi bi-check-circle"></i> Validasi & Cetak</button></div>`;
-         }); wadah.innerHTML = html;
+         let html = ""; res.data.forEach(i => { html += `<div class="bg-white p-3 rounded-4 shadow-sm mb-3 border-start border-4 border-success"><div class="d-flex justify-content-between mb-2"><div><h6 class="fw-bold mb-0">${i.nama}</h6><small class="text-muted">${i.rincian}</small></div><div class="fw-bold text-success">${rupiah(i.total)}</div></div><a href="${i.link_bukti}" target="_blank" class="btn btn-sm btn-light w-100 mb-2 border"><i class="bi bi-search"></i> Cek Struk Transfer</a><button class="btn btn-sm btn-success w-100 fw-bold" onclick="eksekusiValidasi('${i.id_invoice}')"><i class="bi bi-check-circle"></i> Validasi & Cetak</button></div>`; }); wadah.innerHTML = html;
       });
     }
 
     function eksekusiValidasi(id) {
-       SwalMin.fire({ title: 'Validasi & Cetak PDF', text: 'Catatan ini akan tercetak di struk PDF Ortu:', input: 'text', inputPlaceholder: 'Cth: Lunas via BCA', showCancelButton: true, confirmButtonText: 'Sah!', preConfirm: (v) => { if(!v) Swal.showValidationMessage('Wajib diisi!') } }).then(r=>{
-          if(r.isConfirmed){
-             Swal.showLoading(); fetch(API_URL, { method:"POST", body:JSON.stringify({action:'verifikasi_pembayaran', idDbFinance:dataUserGlobal.tenant.idDbFinance, idFolderFinance:dataUserGlobal.tenant.idFolderFinance, idInvoice:id, catatan: r.value})}).then(r=>r.json()).then(res=>{ Toast.fire({icon:'success', title:'Tercetak!'}); loadValidasiKasir(); });
-          }
+       SwalMin.fire({ title: 'Validasi & Cetak PDF', text: 'Catatan struk PDF:', input: 'text', inputPlaceholder: 'Cth: Lunas via BCA', showCancelButton: true, confirmButtonText: 'Sah!', preConfirm: (v) => { if(!v) Swal.showValidationMessage('Wajib diisi!') } }).then(r=>{
+          if(r.isConfirmed){ Swal.showLoading(); fetch(API_URL, { method:"POST", body:JSON.stringify({action:'verifikasi_pembayaran', idDbFinance:dataUserGlobal.tenant.idDbFinance, idFolderFinance:dataUserGlobal.tenant.idFolderFinance, idInvoice:id, catatan: r.value})}).then(r=>r.json()).then(res=>{ Toast.fire({icon:'success', title:'Tercetak!'}); loadValidasiKasir(); }); }
        });
     }
 
-    // TAB 2: BAYAR TUNAI LOKET (POS)
     function fetchSiswaTunai() {
        fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_siswa', tenantDbId: dataUserGlobal.tenant.idDatabase }) }).then(r=>r.json()).then(res=>{ 
           let opt = '<option value="">-- Ketik/Pilih Siswa --</option>'; res.data.forEach(s => { if(s.nisn!=="-") opt += `<option value="${s.nisn}_${s.nama}">${s.nama} (${s.rombel})</option>`; }); document.getElementById('selSiswaTunai').innerHTML = opt;
@@ -277,16 +335,11 @@
 
     function tarikTagihanTunai() {
        let val = document.getElementById('selSiswaTunai').value; if(val==="") return;
-       let parts = val.split('_'); let nisn = parts[0]; let nama = parts[1];
-       invoiceDipilih = []; totalTagihanDipilih = 0; document.getElementById('barCheckoutTunai').style.display='none';
+       let parts = val.split('_'); invoiceDipilih = []; totalTagihanDipilih = 0; document.getElementById('barCheckoutTunai').style.display='none';
        document.getElementById('listTagihanTunaiContainer').innerHTML = `<div class="text-center"><div class="spinner-border text-primary"></div></div>`;
-       
-       fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_tagihan_anak', idDbFinance: dataUserGlobal.tenant.idDbFinance, nisn: nisn, nama: nama }) }).then(r=>r.json()).then(res=>{
-          let html = ""; res.data.forEach(i=>{
-             if(i.status === "Belum Bayar") {
-                html += `<div class="d-flex justify-content-between align-items-center bg-white p-3 mb-2 rounded-3 shadow-sm border"><div><input type="checkbox" class="form-check-input me-2 cb-tunai" value="${i.id_invoice}" data-nom="${i.sisa_tagihan}" onchange="kalkulasiTunai(this)"><b>${i.rincian}</b><br><small class="text-danger ms-4">Jatuh Tempo: ${i.batas_waktu}</small></div><div class="fw-bold text-dark">${rupiah(i.sisa_tagihan)}</div></div>`;
-             }
-          }); document.getElementById('listTagihanTunaiContainer').innerHTML = html===""?"<p class='text-muted text-center'>Lunas semua.</p>":html;
+       fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_tagihan_anak', idDbFinance: dataUserGlobal.tenant.idDbFinance, nisn: parts[0], nama: parts[1] }) }).then(r=>r.json()).then(res=>{
+          let html = ""; res.data.forEach(i=>{ if(i.status === "Belum Bayar") { html += `<div class="d-flex justify-content-between align-items-center bg-white p-3 mb-2 rounded-3 shadow-sm border"><div><input type="checkbox" class="form-check-input me-2 border-primary" value="${i.id_invoice}" data-nom="${i.sisa_tagihan}" onchange="kalkulasiTunai(this)"><b>${i.rincian}</b><br><small class="text-danger ms-4">Jatuh Tempo: ${i.batas_waktu}</small></div><div class="fw-bold text-dark">${rupiah(i.sisa_tagihan)}</div></div>`; } }); 
+          document.getElementById('listTagihanTunaiContainer').innerHTML = html===""?"<p class='text-muted text-center'>Lunas semua.</p>":html;
        });
     }
 
@@ -297,31 +350,23 @@
     }
 
     function prosesBayarTunai() {
-       SwalMin.fire({ title: 'Terima Tunai', html: `Total: <b class="text-success fs-4">${rupiah(totalTagihanDipilih)}</b><br>Nama Penerima Uang:`, input: 'text', inputPlaceholder: 'Cth: Ibu Maria', showCancelButton: true, confirmButtonText: 'Cetak E-Kwitansi', confirmButtonColor: '#198754' }).then(r=>{
-          if(r.isConfirmed){
-             Swal.showLoading(); fetch(API_URL, { method:"POST", body:JSON.stringify({action:'bayar_tunai', idDbFinance:dataUserGlobal.tenant.idDbFinance, idFolderFinance:dataUserGlobal.tenant.idFolderFinance, idInvoiceArray:invoiceDipilih, catatan: r.value})}).then(r=>r.json()).then(res=>{ SwalMin.fire('Sukses', res.pesan, 'success'); tarikTagihanTunai(); });
-          }
+       SwalMin.fire({ title: 'Terima Tunai', html: `Total: <b class="text-success fs-4">${rupiah(totalTagihanDipilih)}</b><br>Penerima Uang:`, input: 'text', inputPlaceholder: 'Cth: Ibu Maria', showCancelButton: true, confirmButtonText: 'Cetak E-Kwitansi' }).then(r=>{
+          if(r.isConfirmed){ Swal.showLoading(); fetch(API_URL, { method:"POST", body:JSON.stringify({action:'bayar_tunai', idDbFinance:dataUserGlobal.tenant.idDbFinance, idFolderFinance:dataUserGlobal.tenant.idFolderFinance, idInvoiceArray:invoiceDipilih, catatan: r.value})}).then(r=>r.json()).then(res=>{ SwalMin.fire('Sukses', res.pesan, 'success'); tarikTagihanTunai(); }); }
        });
     }
 
-    // TAB 3: RADAR TUNGGAKAN
     function loadTunggakan() {
        const wadah = document.getElementById('listTunggakanContainer'); wadah.innerHTML = `<div class="text-center"><div class="spinner-border text-danger"></div></div>`;
        fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_tunggakan', idDbFinance: dataUserGlobal.tenant.idDbFinance }) }).then(r=>r.json()).then(res=>{
           if(res.data.length===0) return wadah.innerHTML = `<p class="text-center text-success"><i class="bi bi-emoji-smile"></i> Bersih! Tidak ada yang nunggak.</p>`;
-          let html = ""; res.data.forEach(s => {
-             html += `<div class="bg-white p-3 rounded-4 shadow-sm mb-3 border-start border-4 border-danger"><div class="d-flex justify-content-between"><div><h6 class="fw-bold mb-0 text-dark">${s.nama}</h6><small class="text-muted">${s.listTagihan.length} Tagihan Lewat Batas</small></div><div class="fw-bold text-danger fs-5">${rupiah(s.totalTunggakan)}</div></div><div class="mt-2 text-muted" style="font-size:0.75rem;">${s.listTagihan.join(', ')}</div><button class="btn btn-sm btn-outline-danger w-100 mt-2"><i class="bi bi-whatsapp"></i> Ingatkan (WA)</button></div>`;
-          }); wadah.innerHTML = html;
+          let html = ""; res.data.forEach(s => { html += `<div class="bg-white p-3 rounded-4 shadow-sm mb-3 border-start border-4 border-danger"><div class="d-flex justify-content-between"><div><h6 class="fw-bold mb-0 text-dark">${s.nama}</h6><small class="text-muted">${s.listTagihan.length} Tagihan Lewat Batas</small></div><div class="fw-bold text-danger fs-5">${rupiah(s.totalTunggakan)}</div></div><div class="mt-2 text-muted" style="font-size:0.75rem;">${s.listTagihan.join(', ')}</div><button class="btn btn-sm btn-outline-danger w-100 mt-2"><i class="bi bi-whatsapp"></i> Ingatkan (WA)</button></div>`; }); wadah.innerHTML = html;
        });
     }
 
-    // TAB 4: RIWAYAT GLOBAL / BUKU BESAR
     function loadRiwayatGlobal() {
        document.getElementById('listRiwayatContainer').innerHTML = `<div class="text-center"><div class="spinner-border text-secondary"></div></div>`;
        fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_riwayat_global', idDbFinance: dataUserGlobal.tenant.idDbFinance }) }).then(r=>r.json()).then(res=>{
-          let html = ""; res.data.forEach(i => {
-             html += `<div class="card-riwayat bg-white p-3 rounded-4 shadow-sm mb-3 border"><div class="d-flex justify-content-between mb-1"><div><b class="text-dark">${i.nama}</b><br><small class="text-muted">${i.rincian}</small></div><div class="text-end"><span class="fw-bold text-success">${rupiah(i.nominal)}</span><br><small style="font-size:10px;">${i.id_invoice}</small></div></div><div class="d-flex justify-content-between align-items-center mt-2"><small class="text-muted"><i class="bi bi-calendar-check"></i> ${i.tgl_lunas}</small><a href="${i.link_kwitansi}" target="_blank" class="btn btn-sm btn-dark px-3 rounded-pill"><i class="bi bi-printer"></i> Cetak</a></div></div>`;
-          }); document.getElementById('listRiwayatContainer').innerHTML = html;
+          let html = ""; res.data.forEach(i => { html += `<div class="card-riwayat bg-white p-3 rounded-4 shadow-sm mb-3 border"><div class="d-flex justify-content-between mb-1"><div><b class="text-dark">${i.nama}</b><br><small class="text-muted">${i.rincian}</small></div><div class="text-end"><span class="fw-bold text-success">${rupiah(i.nominal)}</span><br><small style="font-size:10px;">${i.id_invoice}</small></div></div><div class="d-flex justify-content-between align-items-center mt-2"><small class="text-muted"><i class="bi bi-calendar-check"></i> ${i.tgl_lunas}</small><a href="${i.link_kwitansi}" target="_blank" class="btn btn-sm btn-dark px-3 rounded-pill"><i class="bi bi-printer"></i> Cetak</a></div></div>`; }); document.getElementById('listRiwayatContainer').innerHTML = html;
        });
     }
 
