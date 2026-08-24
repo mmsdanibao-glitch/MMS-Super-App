@@ -412,19 +412,35 @@
 
     // ==== RADAR TUNGGAKAN (SENSOR YAYASAN MURNI) ====
     function loadTunggakan() {
-       const wadah = document.getElementById('listTunggakanContainer'); wadah.innerHTML = `<div class="text-center py-4"><div class="spinner-border text-danger"></div></div>`;
-       document.getElementById('cariTunggak').value = ""; let cbAll = document.getElementById('cbTunggakanAll'); if(cbAll) cbAll.checked = false;
+       const wadah = document.getElementById('listTunggakanContainer'); 
+       wadah.innerHTML = `<div class="text-center py-4"><div class="spinner-border text-danger"></div></div>`;
+       document.getElementById('cariTunggak').value = ""; 
+       let cbAll = document.getElementById('cbTunggakanAll'); if(cbAll) cbAll.checked = false;
        
        let isYayasan = dataUserGlobal.user.role.toLowerCase().includes('yayasan');
+       
        if(isYayasan) {
-           let boxAksi = document.getElementById('boxAksiTunggakan'); if(boxAksi) boxAksi.style.display = 'none';
-           let headerT = document.getElementById('headerTunggakan'); if(headerT) headerT.innerHTML = `<div class="d-flex justify-content-between align-items-center w-100"><div><h6 class="fw-bold mb-0 text-danger"><i class="bi bi-journal-text me-2"></i>Laporan Detail Tunggakan</h6><small class="text-muted">Rincian tagihan siswa yang lewat batas.</small></div><button class="btn btn-sm btn-danger fw-bold rounded-pill shadow-sm" onclick="cetakLaporanTunggakan()"><i class="bi bi-printer me-1"></i> Cetak PDF</button></div>`;
+           // JURUS CABUT PAKSA CLASS BOOTSTRAP:
+           let boxAksi = document.getElementById('boxAksiTunggakan'); 
+           if(boxAksi) { boxAksi.classList.remove('d-flex'); boxAksi.classList.add('d-none'); }
+           
+           let headerT = document.getElementById('headerTunggakan'); 
+           if(headerT) headerT.innerHTML = `<div class="d-flex justify-content-between align-items-center w-100"><div><h6 class="fw-bold mb-0 text-danger"><i class="bi bi-journal-text me-2"></i>Laporan Detail Tunggakan</h6><small class="text-muted">Rincian tagihan siswa yang lewat batas.</small></div><button class="btn btn-sm btn-danger fw-bold rounded-pill shadow-sm" onclick="cetakLaporanTunggakan()"><i class="bi bi-printer me-1"></i> Cetak PDF</button></div>`;
        } else {
-           let boxAksi = document.getElementById('boxAksiTunggakan'); if(boxAksi) boxAksi.style.display = 'flex';
-           let headerT = document.getElementById('headerTunggakan'); if(headerT) headerT.innerHTML = `<h6 class="fw-bold mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Radar Tunggakan Aktif</h6><small>Hapus centang untuk mengecualikan siswa dari Peringatan.</small>`;
+           // KEMBALIKAN CLASS JIKA BENDAHARA YANG MASUK:
+           let boxAksi = document.getElementById('boxAksiTunggakan'); 
+           if(boxAksi) { boxAksi.classList.remove('d-none'); boxAksi.classList.add('d-flex'); }
+           
+           let headerT = document.getElementById('headerTunggakan'); 
+           if(headerT) headerT.innerHTML = `<h6 class="fw-bold mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Radar Tunggakan Aktif</h6><small>Hapus centang untuk mengecualikan siswa dari Peringatan.</small>`;
        }
 
-       fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_tunggakan', idDbFinance: dataUserGlobal.tenant.idDbFinance }) }).then(r=>r.json()).then(res=>{ if(res.status === 'success') { if(!res.data || res.data.length === 0) { wadah.innerHTML = `<p class="text-center text-success py-4"><i class="bi bi-emoji-smile fs-3"></i><br>Bersih! Tidak ada siswa yang menunggak.</p>`; return; } tunggakanRaw = res.data; renderTunggakan(tunggakanRaw); } else { wadah.innerHTML = `<p class="text-center text-danger">Gagal memuat data tunggakan.</p>`; } }).catch(err => { wadah.innerHTML = `<p class="text-center text-danger">Kesalahan koneksi server.</p>`; });
+       fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_tunggakan', idDbFinance: dataUserGlobal.tenant.idDbFinance }) }).then(r=>r.json()).then(res=>{ 
+           if(res.status === 'success') { 
+               if(!res.data || res.data.length === 0) { wadah.innerHTML = `<p class="text-center text-success py-4"><i class="bi bi-emoji-smile fs-3"></i><br>Bersih! Tidak ada siswa yang menunggak.</p>`; return; } 
+               tunggakanRaw = res.data; renderTunggakan(tunggakanRaw); 
+           } else { wadah.innerHTML = `<p class="text-center text-danger">Gagal memuat data tunggakan.</p>`; } 
+       }).catch(err => { wadah.innerHTML = `<p class="text-center text-danger">Kesalahan koneksi server.</p>`; });
     }
 
     function renderTunggakan(dataArr) { let html = ""; let isYayasan = dataUserGlobal.user.role.toLowerCase().includes('yayasan'); dataArr.forEach((s) => { let jsonStr = encodeURIComponent(JSON.stringify({nama: s.nama, nisn: s.nisn, total: s.totalTunggakan, rincianArr: s.listTagihan})); let rincianUi = "• " + s.listTagihan.join('<br>• '); let checkboxHtml = isYayasan ? '' : `<input type="checkbox" class="form-check-input cb-tunggak-item mt-1 border-danger me-2" style="transform: scale(1.2);" value="${jsonStr}">`; html += `<div class="bg-white p-3 rounded-4 shadow-sm mb-3 border-start border-4 border-danger card-tunggak"><div class="d-flex justify-content-between align-items-start"><div class="d-flex gap-2">${checkboxHtml}<div><h6 class="fw-bold mb-0 text-dark">${s.nama}</h6><small class="text-muted">${s.listTagihan.length} Tagihan Lewat Batas</small></div></div><div class="fw-bold text-danger fs-5">${rupiah(s.totalTunggakan)}</div></div><div class="mt-2 text-muted ms-4" style="font-size:0.8rem; line-height: 1.6;">${rincianUi}</div></div>`; }); document.getElementById('listTunggakanContainer').innerHTML = html; }
