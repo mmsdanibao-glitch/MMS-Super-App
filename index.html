@@ -435,7 +435,46 @@
 
     // ==== VALIDASI & TUNAI ====
     function loadValidasiKasir() { const wadah = document.getElementById('listValidasiContainer'); wadah.innerHTML = `<div class="text-center"><div class="spinner-border text-success"></div></div>`; fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_admin_keuangan', idDbFinance: dataUserGlobal.tenant.idDbFinance }) }).then(r=>r.json()).then(res=>{ if(res.data.length===0) return wadah.innerHTML = `<p class="text-center mt-3 text-muted">Meja Validasi Bersih.</p>`; let html = ""; res.data.forEach(i => { html += `<div class="bg-white p-3 rounded-4 shadow-sm mb-3 border-start border-4 border-success"><div class="d-flex justify-content-between mb-2"><div><h6 class="fw-bold mb-0">${i.nama}</h6><small class="text-muted">${i.rincian}</small></div><div class="fw-bold text-success">${rupiah(i.total)}</div></div><a href="${i.link_bukti}" target="_blank" class="btn btn-sm btn-light w-100 mb-2 border rounded-pill shadow-sm"><i class="bi bi-search"></i> Cek Struk Transfer</a><button class="btn btn-sm btn-success w-100 fw-bold rounded-pill shadow-sm" onclick="eksekusiValidasi('${i.id_invoice}')"><i class="bi bi-check-circle"></i> Validasi & Cetak</button></div>`; }); wadah.innerHTML = html; }); }
-    function eksekusiValidasi(id) { SwalMin.fire({ title: 'Validasi & Cetak PDF', text: 'Catatan struk PDF:', input: 'text', inputPlaceholder: 'Cth: Lunas via BCA', showCancelButton: true, confirmButtonText: 'Sah!', preConfirm: (v) => { if(!v) Swal.showValidationMessage('Wajib diisi!') } }).then(r=>{ if(r.isConfirmed){ Swal.showLoading(); fetch(API_URL, { method:"POST", body:JSON.stringify({action:'verifikasi_pembayaran', idDbFinance:dataUserGlobal.tenant.idDbFinance, idFolderFinance:dataUserGlobal.tenant.idFolderFinance, idInvoice:id, catatan: r.value, yayasan: dataUserGlobal.tenant.namaYayasan, sekolah: dataUserGlobal.tenant.singkatanSekolah, namaKasir: dataUserGlobal.user.nama})}).then(r=>r.json()).then(res=>{ Toast.fire({icon:'success', title:'Tercetak!'}); loadValidasiKasir(); }); } }); }
+    function eksekusiValidasi(id) { 
+        Swal.fire({ 
+            title: 'Validasi E-Kwitansi', 
+            html: `
+                <div class="text-start">
+                    <p class="small text-muted mb-2"><i class="bi bi-info-circle text-success"></i> Catatan ini akan tercetak otomatis di E-Kwitansi Digital.</p>
+                    <textarea id="swal-input-catatan" class="form-control rounded-4 shadow-sm border-success p-3" rows="3" placeholder="Cth: Lunas transfer via Bank BCA a.n. Maria (Ibunda Budi)..."></textarea>
+                </div>
+            `, 
+            showCancelButton: true, 
+            confirmButtonText: '<i class="bi bi-check-circle"></i> Sahkan & Terbitkan', 
+            cancelButtonText: 'Batal',
+            confirmButtonColor: '#198754', 
+            preConfirm: () => { 
+                const val = document.getElementById('swal-input-catatan').value;
+                if(!val) { Swal.showValidationMessage('Catatan transfer wajib diisi!'); }
+                return val;
+            } 
+        }).then(r => { 
+            if(r.isConfirmed) { 
+                SwalMin.fire({title: 'Menerbitkan E-Kwitansi...', allowOutsideClick: false, didOpen: () => {Swal.showLoading()}}); 
+                fetch(API_URL, { 
+                    method: "POST", 
+                    body: JSON.stringify({
+                        action: 'verifikasi_pembayaran', 
+                        idDbFinance: dataUserGlobal.tenant.idDbFinance, 
+                        idFolderFinance: dataUserGlobal.tenant.idFolderFinance, 
+                        idInvoice: id, 
+                        catatan: r.value, 
+                        yayasan: dataUserGlobal.tenant.namaYayasan, 
+                        sekolah: dataUserGlobal.tenant.singkatanSekolah, 
+                        namaKasir: dataUserGlobal.user.nama
+                    })
+                }).then(r => r.json()).then(res => { 
+                    Toast.fire({icon: 'success', title: 'E-Kwitansi Terbit!'}); 
+                    loadValidasiKasir(); 
+                }); 
+            } 
+        }); 
+    }
     function fetchSiswaTunai() { 
         fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_siswa_kasir', tenantDbId: dataUserGlobal.tenant.idDatabase, idDbFinance: dataUserGlobal.tenant.idDbFinance }) })
         .then(r=>r.json()).then(res=>{ if(res.status === 'success') { dataSemuaSiswa = res.data; let opt = ''; res.data.forEach(s => { let infoNisn = s.nisn !== "-" ? ` | NISN: ${s.nisn}` : ` | Anak TK`; opt += `<option value="${s.nama}">Kelas ${s.rombel}${infoNisn}</option>`; }); document.getElementById('listSiswaTunai').innerHTML = opt; } }); 
