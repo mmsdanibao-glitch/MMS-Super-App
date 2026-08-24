@@ -315,7 +315,13 @@
     function rupiah(angka) { return "Rp " + parseInt(angka).toLocaleString('id-ID'); }
     function unformatRupiah(val) { if(!val) return 0; return parseInt(val.toString().replace(/\./g, '')) || 0; }
     function formatRupiahInput(elem) { let val = elem.value.replace(/[^0-9]/g, ''); if(val === "") { elem.value = ""; return; } elem.value = parseInt(val, 10).toLocaleString('id-ID'); }
-    function parseDate(str) { let p = str.split('/'); return new Date(p[2], p[1]-1, p[0]); }
+    function parseDate(str) { 
+    if (!str) return new Date(); 
+    let s = str.toString().trim(); 
+    if (s.includes('/')) { let p = s.split('/'); return new Date(p[2], p[1]-1, p[0]); } 
+    if (s.includes('-')) { let p = s.split('-'); return p[0].length === 4 ? new Date(p[0], p[1]-1, p[2]) : new Date(p[2], p[1]-1, p[0]); } 
+    return new Date(s); 
+}
     function tutupModul() { document.getElementById('halamanModul').style.display = 'none'; document.getElementById('halamanDashboard').style.display = 'block'; }
     function previewFile(inputId, ikonId, teksId) { const f = document.getElementById(inputId).files[0]; if(f){ document.getElementById(ikonId).className="bi bi-check-circle-fill fs-1 text-success"; document.getElementById(teksId).innerText=f.name; document.getElementById(teksId).className="small fw-bold mt-2 mb-0 text-success"; document.getElementById(inputId).parentElement.style.borderColor="#198754"; } }
     const toBase64 = file => new Promise((resolve, reject) => { const r = new FileReader(); r.readAsDataURL(file); r.onload = () => resolve(r.result); r.onerror = e => reject(e); });
