@@ -689,12 +689,25 @@
     // ================= BUAT KONTRAK & MASTER TARIF =================
     function cekFrekuensi() { const frek = document.getElementById('selFrekuensiTagihan').value; if (frek === "Cicilan Khusus") { document.getElementById('areaJumlahCicilan').style.display = "block"; document.getElementById('areaNominalPerCicilan').style.display = "block"; } else { document.getElementById('areaJumlahCicilan').style.display = "none"; document.getElementById('areaNominalPerCicilan').style.display = "none"; } hitungTotalKontrak(); }
     async function persiapanBuatKontrak() { document.getElementById('btnSubmitKontrak').disabled = true; document.getElementById('btnSubmitKontrak').innerHTML = 'Memuat...'; document.getElementById('inpTglMulai').value = new Date().toISOString().split('T')[0]; let blnDepan = new Date(); blnDepan.setMonth(blnDepan.getMonth() + 1); document.getElementById('inpTglAkhir').value = blnDepan.toISOString().split('T')[0]; try { const [resSiswa, resTarif] = await Promise.all([ fetch(API_URL, { method: "POST", body: JSON.stringify({action: 'get_siswa', tenantDbId: dataUserGlobal.tenant.idDatabase})}).then(r=>r.json()), fetch(API_URL, { method: "POST", body: JSON.stringify({action: 'get_master_tarif', idDbFinance: dataUserGlobal.tenant.idDbFinance})}).then(r=>r.json()) ]); if(resSiswa.status==='success') { dataSemuaSiswa = resSiswa.data; let optSiswa = '<option value="">-- Pilih Target --</option>'; let kelasUnik = [...new Set(dataSemuaSiswa.filter(s => s.nisn !== "-" && s.rombel && s.rombel !== "-").map(s => s.rombel))]; if(kelasUnik.length > 0) { optSiswa += '<optgroup label="🌟 TERAPKAN MASSAL PER KELAS">'; kelasUnik.forEach(kls => optSiswa += `<option value="MASSAL_${kls}" class="text-danger fw-bold">MASSAL: Semua Siswa Kelas ${kls}</option>`); optSiswa += '</optgroup>'; } optSiswa += '<optgroup label="👤 SISWA SATUAN / RESTRUKTURISASI">'; dataSemuaSiswa.forEach((s, i) => { if(s.nisn !== "-") optSiswa += `<option value="${i}">${s.nama} (${s.rombel})</option>`; }); optSiswa += '</optgroup>'; document.getElementById('selSiswaKontrak').innerHTML = optSiswa; } if(resTarif.status==='success') { dataMasterTarif = resTarif.data; let optTarif = '<option value="">-- Pilih Tarif --</option>'; dataMasterTarif.forEach((t, i) => { optTarif += `<option value="${i}">${t.kategori} - Rp ${parseInt(t.nominal).toLocaleString('id-ID')}</option>`; }); document.getElementById('selTarifKontrak').innerHTML = optTarif; } document.getElementById('btnSubmitKontrak').disabled = false; document.getElementById('btnSubmitKontrak').innerHTML = 'Ajukan Tagihan'; } catch(e) { Toast.fire({icon: 'error', title: 'Gagal memuat data'}); } }
-    function cekModeMassal() { const idx = document.getElementById('selSiswaKontrak').value; if(idx.toString().startsWith("MASSAL_")) { document.getElementById('areaDiskon').style.display = 'none'; document.getElementById('inpDiskon').value = "0"; document.getElementById('selKeringanan').value = "Tidak Ada"; } else { document.getElementById('areaDiskon').style.display = 'flex'; } hitungTotalKontrak(); }
+    function cekModeMassal() { 
+        const idx = document.getElementById('selSiswaKontrak').value; 
+        if(idx.toString().startsWith("MASSAL_")) { 
+            document.getElementById('areaDiskon').style.display = 'none'; 
+            document.getElementById('inpDiskon').value = "0"; 
+            document.getElementById('selKeringanan').value = "Tidak Ada"; 
+        } else { 
+            document.getElementById('areaDiskon').style.display = 'flex'; 
+        } 
+        hitungTotalKontrak(); 
+    }
 
     function hitungTotalKontrak() { 
         const idxTarif = document.getElementById('selTarifKontrak').value; 
         if(idxTarif === "") { 
-            document.getElementById('inpNominalStandar').value = ""; document.getElementById('inpTotalKewajiban').value = ""; document.getElementById('inpNominalPerCicilan').value = ""; return; 
+            document.getElementById('inpNominalStandar').value = ""; 
+            document.getElementById('inpTotalKewajiban').value = ""; 
+            document.getElementById('inpNominalPerCicilan').value = ""; 
+            return; 
         } 
         const nominalMentah = parseInt(dataMasterTarif[idxTarif].nominal) || 0; 
         document.getElementById('inpNominalStandar').value = nominalMentah.toLocaleString('id-ID'); 
