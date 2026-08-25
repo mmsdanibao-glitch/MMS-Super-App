@@ -284,7 +284,7 @@
           </div>
           <div class="mb-2"><label class="form-label text-danger">Total Kewajiban (Semua Termin)</label><input type="text" class="form-control bg-light border-0 fw-bold fs-5 text-danger" id="inpTotalKewajiban" readonly></div>
           <div class="mb-4" id="areaNominalPerCicilan" style="display: none;"><label class="form-label text-warning">Estimasi Bayar per Termin</label><input type="text" class="form-control bg-light border-0 fw-bold fs-6" id="inpNominalPerCicilan" readonly></div>
-          <button type="submit" id="btnSubmitKontrak" class="btn-emboss mt-2 shadow-sm">Ajukan Tagihan</button>
+          <button type="submit" id="btnSubmitKontrak" class="btn-emboss mt-2 shadow-sm">Buat Kontrak</button>
         </form>
       </div>
     </div>
@@ -420,7 +420,7 @@
             htmlMenu += `<div class="menu-card" onclick='bukaModul("rekening")'><div class="menu-icon-wrap"><i class="bi bi-safe text-success"></i></div><p class="menu-title text-success fw-bold">Rekening Bank</p></div>`;
         } else if (role.includes('bendahara')) {
             htmlMenu += `<div class="menu-card" onclick='bukaModul("verifikasi")'><div class="menu-icon-wrap"><i class="bi bi-ui-checks"></i></div><p class="menu-title fw-bold text-dark">Verifikasi PPDB</p></div>`;
-            htmlMenu += `<div class="menu-card" onclick='bukaModul("buat_kontrak")'><div class="menu-icon-wrap"><i class="bi bi-file-earmark-plus"></i></div><p class="menu-title fw-bold text-dark">Buat Tagihan</p></div>`;
+            htmlMenu += `<div class="menu-card" onclick='bukaModul("buat_kontrak")'><div class="menu-icon-wrap"><i class="bi bi-file-earmark-plus"></i></div><p class="menu-title fw-bold text-dark">Buat Kontrak</p></div>`;
             htmlMenu += `<div class="menu-card" onclick='bukaModul("edit_diskon")'><div class="menu-icon-wrap"><i class="bi bi-tags"></i></div><p class="menu-title fw-bold text-dark">Ajukan Tagihan</p></div>`;
             htmlMenu += `<div class="menu-card" onclick='bukaModul("kasir_keuangan")'><div class="menu-icon-wrap"><i class="bi bi-cash-coin"></i></div><p class="menu-title fw-bold text-dark">Kasir & Laporan</p></div>`;
         } else if (role.includes('admin') || role.includes('kepala')) {
@@ -453,8 +453,8 @@
                 fetchSiswaTunai(); switchTabKasir('validasi');
             }
         }
-        else if(modulId === 'buat_kontrak') { document.getElementById('judulModul').innerText="Buat Tagihan"; document.getElementById('areaBuatKontrak').style.display='block'; persiapanBuatKontrak(); }
-        else if(modulId === 'edit_diskon') { document.getElementById('judulModul').innerText="Ajukan Tagihan"; document.getElementById('areaEditDiskon').style.display='block'; tarikDataEditDiskon(); }
+        else if(modulId === 'buat_kontrak') { document.getElementById('judulModul').innerText="Buat Kontrak"; document.getElementById('areaBuatKontrak').style.display='block'; persiapanBuatKontrak(); }
+        else if(modulId === 'edit_diskon') { document.getElementById('judulModul').innerText="Buat Kontrak"; document.getElementById('areaEditDiskon').style.display='block'; tarikDataEditDiskon(); }
         else if(modulId === 'meja_yayasan') { document.getElementById('judulModul').innerText="ACC Tagihan"; document.getElementById('areaMejaYayasan').style.display='block'; tarikDataYayasan(); }
         else if(modulId === 'rekening') { document.getElementById('judulModul').innerText="Rekening Bank"; document.getElementById('areaRekeningBank').style.display='block'; tarikDataRekening(); }
         else if(modulId === 'verifikasi') { document.getElementById('judulModul').innerText="Verifikasi PPDB"; document.getElementById('areaMejaVerifikasi').style.display='block'; }
@@ -738,7 +738,7 @@
             } 
             
             document.getElementById('btnSubmitKontrak').disabled = false; 
-            document.getElementById('btnSubmitKontrak').innerHTML = 'Ajukan Tagihan'; 
+            document.getElementById('btnSubmitKontrak').innerHTML = 'Buat Kontrak'; 
         } catch(e) { Toast.fire({icon: 'error', title: 'Gagal memuat data'}); } 
     }
 
