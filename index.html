@@ -704,12 +704,16 @@
 
     function cetakStrukGambar(id, namaEnc, rincianEnc, nominal, tgl, catatanEnc) {
     let nama = decodeURIComponent(namaEnc); let rincian = decodeURIComponent(rincianEnc); let catatan = decodeURIComponent(catatanEnc);
-    
-    // 1. TAMBAHAN PENANGKAP WAKTU SAAT INI
     let waktuJam = new Date().toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
     
+    // PERBAIKAN: Format angka dengan titik ribuan
+    let formatNominal = parseInt(nominal).toLocaleString('id-ID');
+    
     SwalMin.fire({title: 'Membuat Gambar...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
-    let detailQR = encodeURIComponent(`ID: ${id}\nNama: ${nama}\nItem: ${rincian}\nTotal: Rp ${nominal}\nStatus: LUNAS\nTgl: ${tgl}`); let qrUrl = "https://quickchart.io/qr?text=" + detailQR + "&size=130";
+    
+    // Masukkan formatNominal ke dalam QR
+    let detailQR = encodeURIComponent(`ID: ${id}\nNama: ${nama}\nItem: ${rincian}\nTotal: Rp ${formatNominal}\nStatus: LUNAS\nTgl: ${tgl}`); 
+    let qrUrl = "https://quickchart.io/qr?text=" + detailQR + "&size=130";
     
     // 2. TEMPLATE HTML YANG SUDAH DIUPDATE WAKTU & MOTIVASI
     let html = `<div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #ffffff; padding: 25px; width: 380px; position: relative; overflow: hidden; color: #333;"><div style="position: absolute; top: 40%; left: -30%; font-size: 50px; color: rgba(139, 0, 0, 0.04); font-weight: 900; white-space: nowrap; transform: rotate(-30deg); line-height: 1; z-index: 1;">${dataUserGlobal.tenant.namaYayasan}<br>${dataUserGlobal.tenant.singkatanSekolah}</div><div style="text-align: center; padding-bottom: 15px; border-bottom: 2px dashed #8B0000; position: relative; z-index: 2;"><h2 style="color: #8B0000; margin: 0; font-size: 20px; letter-spacing: 1px;">BUKTI PEMBAYARAN</h2><p style="margin: 5px 0 0 0; font-size: 13px; color: #555; font-weight: bold;">${dataUserGlobal.tenant.namaYayasan} - ${dataUserGlobal.tenant.singkatanSekolah}</p><p style="margin: 2px 0 0 0; font-size: 11px; color: #888;">Tgl Cetak: ${tgl} - ${waktuJam} WITA</p></div><div style="padding: 15px 0; position: relative; z-index: 2; line-height: 1.4;"><p style="margin: 0; font-size: 10px; color: #888;">ID TRANSAKSI</p><p style="margin: 0 0 10px 0; font-size: 13px; font-weight: bold;">${id}</p><p style="margin: 0; font-size: 10px; color: #888;">TERIMA DARI</p><p style="margin: 0 0 10px 0; font-size: 13px; font-weight: bold;">${nama}</p><p style="margin: 0; font-size: 10px; color: #888;">GUNA PEMBAYARAN</p><p style="margin: 0 0 10px 0; font-size: 13px; font-weight: bold;">${rincian}</p></div><div style="background-color: #f8f9fc; padding: 15px; border-radius: 8px; text-align: center; border-left: 5px solid #198754; position: relative; z-index: 2;"><p style="margin: 0 0 5px 0; font-size: 11px; color: #888;">TOTAL DIBAYAR</p><h1 style="color: #198754; margin: 0; font-size: 24px;">Rp ${parseInt(nominal).toLocaleString('id-ID')}</h1></div><div style="padding: 15px 0; border-bottom: 2px dashed #ccc; position: relative; z-index: 2;"><p style="margin: 0 0 5px 0; font-size: 10px; color: #888;">CATATAN KASIR</p><p style="margin: 0; font-size: 12px; font-style: italic;">"${catatan}"</p></div><div style="padding-top: 15px; text-align: center; position: relative; z-index: 2;"><div style="color: #198754; border: 3px solid #198754; display: inline-block; padding: 5px 20px; border-radius: 6px; letter-spacing: 3px; font-weight: 900; font-size: 16px; margin-bottom: 10px;">LUNAS</div><br><img src="${qrUrl}" crossorigin="anonymous" alt="QR" width="90" height="90" style="border: 1px solid #eee; padding: 4px; border-radius: 8px; background: white;"><p style="margin: 12px 0 0 0; font-size: 10px; font-style: italic; color: #777; line-height: 1.4;">"Terima kasih telah membayar tepat waktu.<br>Kedisiplinan Anda mendukung kelancaran pendidikan."</p></div></div>`;
