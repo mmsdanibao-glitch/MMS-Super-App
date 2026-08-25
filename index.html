@@ -253,6 +253,36 @@
          <div id="wadahRingkasanLaporan"></div>
          <div id="listLaporanContainer"></div>
       </div>
+
+      <!-- Modal Terima Tunai Elegan -->
+<div class="modal fade" id="modalTerimaTunai" tabindex="-1" aria-labelledby="modalTerimaTunaiLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 15px;">
+      <div class="modal-header bg-success text-white" style="border-radius: 15px 15px 0 0;">
+        <h5 class="modal-title fw-bold" id="modalTerimaTunaiLabel"><i class="fas fa-hand-holding-usd me-2"></i> Konfirmasi Pembayaran Tunai</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <p class="text-muted mb-4">Silakan lengkapi data penyetor dan catatan tambahan sebelum mencetak bukti pembayaran.</p>
+        
+        <div class="form-floating mb-3">
+          <input type="text" class="form-control form-control-lg" id="inputNamaPenyetor" placeholder="Nama Penyetor (Ortu/Wali)">
+          <label for="inputNamaPenyetor"><i class="fas fa-user me-1"></i> Nama Penyetor</label>
+        </div>
+        
+        <div class="form-floating mb-3">
+          <textarea class="form-control" id="inputCatatanKasir" placeholder="Catatan Kasir (Opsional)" style="height: 100px"></textarea>
+          <label for="inputCatatanKasir"><i class="fas fa-sticky-note me-1"></i> Catatan Kasir (Opsional)</label>
+        </div>
+      </div>
+      <div class="modal-footer bg-light" style="border-radius: 0 0 15px 15px;">
+        <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-success px-4 fw-bold" onclick="prosesBayarTunai()"><i class="fas fa-print me-1"></i> Proses & Cetak Kwitansi</button>
+      </div>
+    </div>
+  </div>
+</div>
+      
     </div>
 
     <!-- AREA VERIFIKASI PPDB -->
@@ -509,6 +539,18 @@
     function tampilkanNoRek() { const val = document.getElementById('selBankTujuan').value; if(val === "") { document.getElementById('boxNoRek').style.display = 'none'; return; } const obj = JSON.parse(val); document.getElementById('teksNoRek').innerText = obj.rek; document.getElementById('teksAtasNama').innerText = "a.n. " + obj.an; document.getElementById('boxNoRek').style.display = 'block'; }
     function copyRekening() { navigator.clipboard.writeText(document.getElementById('teksNoRek').innerText); Toast.fire({icon: 'success', title: 'Disalin'}); }
     document.getElementById('formUploadMultiBayar').addEventListener('submit', async function(e) { e.preventDefault(); const btn = document.getElementById('btnKirimMulti'); btn.innerHTML='Mengunggah...'; btn.disabled=true; try { const base64 = await toBase64(document.getElementById('fileBuktiTFMulti').files[0]); const res = await fetch(API_URL, { method:"POST", body: JSON.stringify({action:'bayar_tagihan_massal', idDbFinance:dataUserGlobal.tenant.idDbFinance, idFolderFinance:dataUserGlobal.tenant.idFolderFinance, idInvoiceArray: invoiceDipilih, fileBukti:base64})}).then(r=>r.json()); btn.innerHTML='Kirim Bukti'; btn.disabled=false; if(res.status==='success') { document.getElementById('modalMultiBayar').style.display='none'; document.getElementById('formUploadMultiBayar').reset(); SwalMin.fire({title: 'Berhasil!', text: res.pesan, icon: 'success'}); tarikTagihan(); } else SwalMin.fire({title: 'Gagal', text: res.pesan, icon: 'error'}); } catch(err) { SwalMin.fire({title: 'Error', text: err.message, icon: 'error'}); btn.disabled=false; } });
+
+    function unduhKwitansiGambar() {
+  // Arahkan ke ID elemen div yang membungkus desain e-kwitansi
+  const elemenKwitansi = document.getElementById("wadahKwitansiHTML"); 
+  
+  html2canvas(elemenKwitansi, { scale: 2 }).then(canvas => {
+    let link = document.createElement('a');
+    link.download = 'Kwitansi_YPKR_NCIPS.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
+}
 
     // ================= KASIR BENDAHARA =================
     function switchTabKasir(tab) {
