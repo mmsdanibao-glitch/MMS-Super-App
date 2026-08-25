@@ -264,28 +264,53 @@
     <!-- AREA BUAT KONTRAK -->
     <div id="areaBuatKontrak" style="display: none; padding: 20px;">
       <div class="d-flex justify-content-between align-items-center mb-3">
-         <h6 class="fw-bold mb-0"><i class="bi bi-file-earmark-plus text-danger me-2"></i>Buat Kontrak</h6>
+         <h6 class="fw-bold mb-0"><i class="bi bi-file-earmark-plus text-danger me-2"></i>Manajemen Kontrak</h6>
          <button class="btn btn-sm btn-outline-danger fw-bold shadow-sm rounded-pill px-3" onclick="document.getElementById('modalTambahTarif').style.display='flex'">+ Master Tarif</button>
       </div>
-      <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
-        <form id="formBuatKontrak">
-          <div class="mb-3"><label class="form-label">Pilih Siswa / Target Massal</label><select class="form-select bg-light border-0 py-2 fw-bold" id="selSiswaKontrak" onchange="cekModeMassal()" required></select></div>
-          <div class="mb-3"><label class="form-label">Kategori Tagihan</label><select class="form-select bg-light border-0 py-2 fw-bold" id="selTarifKontrak" onchange="hitungTotalKontrak()" required></select></div>
-          <div class="mb-4"><label class="form-label">Nominal Standar</label><input type="text" class="form-control bg-light border-0 py-2" id="inpNominalStandar" readonly></div>
-          <div class="alert alert-secondary border-0 p-3 rounded-4 mb-3">
-             <h6 class="fw-bold text-dark mb-3"><i class="bi bi-calendar3 me-2"></i>Waktu & Termin</h6>
-             <div class="mb-2"><label class="form-label small">Skema Pembayaran</label><select class="form-select bg-light border-0 fw-bold text-primary" id="selFrekuensiTagihan" onchange="cekFrekuensi()"><option value="Sekali">1 Kali Pembayaran (Penuh)</option><option value="Bulanan">Bulanan (Otomatis 12 Bulan)</option><option value="Semesteran">Semesteran (Otomatis 2 Termin)</option><option value="Tahunan">Tahunan (Otomatis 1 Termin)</option><option value="Cicilan Khusus">Cicilan Khusus / Restrukturisasi</option></select></div>
-             <div class="mb-2" id="areaJumlahCicilan" style="display: none;"><label class="form-label small text-danger">Berapa Kali Cicilan?</label><input type="number" class="form-control border-danger" id="inpJumlahCicilan" value="3" min="2" oninput="hitungTotalKontrak()"></div>
-             <div class="row g-2 mt-2"><div class="col-6"><label class="form-label small">Mulai Ditagih</label><input type="date" class="form-control bg-light border-0" id="inpTglMulai" required></div><div class="col-6"><label class="form-label small">Batas Akhir</label><input type="date" class="form-control bg-light border-0" id="inpTglAkhir" required></div></div>
+      
+      <!-- Tab Navigasi Baru -->
+      <div class="tab-keuangan mb-3">
+          <button class="tab-btn active" id="btnTab_buatKontrak" onclick="switchTabKontrak('buat')">Form Buat Baru</button>
+          <button class="tab-btn" id="btnTab_pantauPengajuan" onclick="switchTabKontrak('pantau')">Pantau Yayasan</button>
+      </div>
+
+      <!-- KONTEN 1: FORM BUAT KONTRAK -->
+      <div id="tabContent_buatKontrak">
+          <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+            <form id="formBuatKontrak">
+              <div class="mb-3"><label class="form-label">Pilih Siswa / Target Massal</label><select class="form-select bg-light border-0 py-2 fw-bold" id="selSiswaKontrak" onchange="cekModeMassal()" required></select></div>
+              <div class="mb-3"><label class="form-label">Kategori Tagihan</label><select class="form-select bg-light border-0 py-2 fw-bold" id="selTarifKontrak" onchange="hitungTotalKontrak()" required></select></div>
+              <div class="mb-4"><label class="form-label">Nominal Standar</label><input type="text" class="form-control bg-light border-0 py-2" id="inpNominalStandar" readonly></div>
+              <div class="alert alert-secondary border-0 p-3 rounded-4 mb-3">
+                 <h6 class="fw-bold text-dark mb-3"><i class="bi bi-calendar3 me-2"></i>Waktu & Termin</h6>
+                 <div class="mb-2"><label class="form-label small">Skema Pembayaran</label><select class="form-select bg-light border-0 fw-bold text-primary" id="selFrekuensiTagihan" onchange="cekFrekuensi()"><option value="Sekali">1 Kali Pembayaran (Penuh)</option><option value="Bulanan">Bulanan (Otomatis 12 Bulan)</option><option value="Semesteran">Semesteran (Otomatis 2 Termin)</option><option value="Tahunan">Tahunan (Otomatis 1 Termin)</option><option value="Cicilan Khusus">Cicilan Khusus / Restrukturisasi</option></select></div>
+                 <div class="mb-2" id="areaJumlahCicilan" style="display: none;"><label class="form-label small text-danger">Berapa Kali Cicilan?</label><input type="number" class="form-control border-danger" id="inpJumlahCicilan" value="3" min="2" oninput="hitungTotalKontrak()"></div>
+                 <div class="row g-2 mt-2"><div class="col-6"><label class="form-label small">Mulai Ditagih</label><input type="date" class="form-control bg-light border-0" id="inpTglMulai" required></div><div class="col-6"><label class="form-label small">Batas Akhir</label><input type="date" class="form-control bg-light border-0" id="inpTglAkhir" required></div></div>
+              </div>
+              <div class="row g-2 mb-3" id="areaDiskon">
+                 <div class="col-6"><label class="form-label">Keringanan</label><select class="form-select bg-light border-0" id="selKeringanan" onchange="hitungTotalKontrak()"><option value="Tidak Ada">Tidak Ada</option><option value="Beasiswa Yayasan">Beasiswa Yayasan</option><option value="Yatim Piatu">Yatim Piatu</option><option value="Diskon Khusus">Diskon Khusus</option></select></div>
+                 <div class="col-6"><label class="form-label">Nominal Diskon</label><input type="text" class="form-control bg-light border-0" id="inpDiskon" value="0" oninput="formatRupiahInput(this); hitungTotalKontrak()"></div>
+              </div>
+              <div class="mb-2"><label class="form-label text-danger">Total Kewajiban (Semua Termin)</label><input type="text" class="form-control bg-light border-0 fw-bold fs-5 text-danger" id="inpTotalKewajiban" readonly></div>
+              <div class="mb-4" id="areaNominalPerCicilan" style="display: none;"><label class="form-label text-warning">Estimasi Bayar per Termin</label><textarea class="form-control bg-light border-0 fw-bold fs-6 text-danger" id="inpNominalPerCicilan" readonly rows="2" style="resize: none; line-height: 1.5;"></textarea></div>
+              <button type="submit" id="btnSubmitKontrak" class="btn-emboss mt-2 shadow-sm">Buat Kontrak</button>
+            </form>
           </div>
-          <div class="row g-2 mb-3" id="areaDiskon">
-             <div class="col-6"><label class="form-label">Keringanan</label><select class="form-select bg-light border-0" id="selKeringanan" onchange="hitungTotalKontrak()"><option value="Tidak Ada">Tidak Ada</option><option value="Beasiswa Yayasan">Beasiswa Yayasan</option><option value="Yatim Piatu">Yatim Piatu</option><option value="Diskon Khusus">Diskon Khusus</option></select></div>
-             <div class="col-6"><label class="form-label">Nominal Diskon</label><input type="text" class="form-control bg-light border-0" id="inpDiskon" value="0" oninput="formatRupiahInput(this); hitungTotalKontrak()"></div>
-          </div>
-          <div class="mb-2"><label class="form-label text-danger">Total Kewajiban (Semua Termin)</label><input type="text" class="form-control bg-light border-0 fw-bold fs-5 text-danger" id="inpTotalKewajiban" readonly></div>
-          <div class="mb-4" id="areaNominalPerCicilan" style="display: none;"><label class="form-label text-warning">Estimasi Bayar per Termin</label><textarea class="form-control bg-light border-0 fw-bold fs-6 text-danger" id="inpNominalPerCicilan" readonly rows="2" style="resize: none; line-height: 1.5;"></textarea></div>
-          <button type="submit" id="btnSubmitKontrak" class="btn-emboss mt-2 shadow-sm">Buat Kontrak</button>
-        </form>
+      </div>
+
+      <!-- KONTEN 2: PANTAU YAYASAN -->
+      <div id="tabContent_pantauPengajuan" style="display: none;">
+         <div class="alert alert-info border-0 shadow-sm rounded-4 p-3 mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+               <div>
+                  <h6 class="fw-bold mb-1 text-dark"><i class="bi bi-radar text-info me-2"></i>Radar Pengajuan</h6>
+                  <p class="small mb-0 text-muted">Pantau tagihan yang tertahan di Yayasan.</p>
+               </div>
+               <button class="btn btn-info btn-sm text-white fw-bold rounded-pill px-3 shadow-sm" onclick="ingatkanYayasanWA()"><i class="bi bi-whatsapp me-1"></i> Ping</button>
+            </div>
+         </div>
+         <div class="input-group mb-3 shadow-sm rounded-pill overflow-hidden"><span class="input-group-text bg-white border-0 ps-4"><i class="bi bi-search text-muted"></i></span><input type="text" class="form-control border-0 py-3" id="cariPantau" onkeyup="filterPantau()" placeholder="Cari nama siswa..."></div>
+         <div id="listPantauContainer"></div>
       </div>
     </div>
 
@@ -684,6 +709,61 @@
         htmlCetak += `</table><div style="float: right; width: 250px; text-align: center; margin-top: 30px;"><p>Kupang, ${new Date().toLocaleDateString('id-ID')}<br>Mengesahkan,</p><br><br><br><p style="margin-bottom:0;"><b>_____________________</b></p><p style="margin-top:5px;">Bendahara Yayasan / Sekolah</p></div></body></html>`;
         let jendelaCetak = window.open('', '_blank'); jendelaCetak.document.write(htmlCetak); jendelaCetak.document.close(); jendelaCetak.focus();
         setTimeout(() => { jendelaCetak.print(); }, 500);
+    }
+
+    function switchTabKontrak(tab) {
+        document.getElementById('btnTab_buatKontrak').classList.remove('active');
+        document.getElementById('btnTab_pantauPengajuan').classList.remove('active');
+        document.getElementById('tabContent_buatKontrak').style.display = 'none';
+        document.getElementById('tabContent_pantauPengajuan').style.display = 'none';
+        
+        if(tab === 'buat') {
+            document.getElementById('btnTab_buatKontrak').classList.add('active');
+            document.getElementById('tabContent_buatKontrak').style.display = 'block';
+        } else {
+            document.getElementById('btnTab_pantauPengajuan').classList.add('active');
+            document.getElementById('tabContent_pantauPengajuan').style.display = 'block';
+            loadPantauPengajuan();
+        }
+    }
+
+    let pantauRaw = [];
+    function loadPantauPengajuan() {
+        const wadah = document.getElementById('listPantauContainer');
+        wadah.innerHTML = `<div class="text-center mt-4"><div class="spinner-border text-info"></div></div>`;
+        fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_status_pengajuan', idDbFinance: dataUserGlobal.tenant.idDbFinance }) })
+        .then(r=>r.json()).then(res=>{
+            if(res.status==='success') { pantauRaw = res.data; renderPantau(pantauRaw); } 
+            else wadah.innerHTML = `<p class="text-danger text-center">Gagal memuat data.</p>`;
+        });
+    }
+
+    function renderPantau(dataArr) {
+        let html = "";
+        if(dataArr.length === 0) {
+            document.getElementById('listPantauContainer').innerHTML = `<div class="text-center mt-4"><i class="bi bi-check-circle text-success fs-1"></i><p class="text-muted mt-2">Bersih! Tidak ada antrean di Yayasan.</p></div>`; return;
+        }
+        dataArr.forEach(i => {
+            let badgeStatus = i.status.toLowerCase().includes('menunggu') ? `<span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split"></i> Menunggu ACC</span>` : `<span class="badge bg-danger"><i class="bi bi-x-circle"></i> ${i.status}</span>`;
+            html += `<div class="card border-0 shadow-sm mb-3 p-3 rounded-4 bg-white card-pantau"><div class="d-flex justify-content-between align-items-center mb-2"><div><h6 class="fw-bold mb-0 text-dark">${i.nama}</h6><small class="text-muted">${i.kategori}</small></div><div class="text-end">${badgeStatus}</div></div><div class="small text-muted border-top pt-2 mt-1"><b>Total:</b> ${rupiah(i.total)} | <b>Diskon:</b> ${rupiah(i.diskon)}</div></div>`;
+        });
+        document.getElementById('listPantauContainer').innerHTML = html;
+    }
+
+    function filterPantau() {
+        let input = document.getElementById('cariPantau').value.toLowerCase();
+        let filtered = pantauRaw.filter(s => s.nama.toLowerCase().includes(input));
+        renderPantau(filtered);
+    }
+
+    function ingatkanYayasanWA() {
+        let jml = pantauRaw.filter(i => i.status.toLowerCase().includes('menunggu')).length;
+        if(jml === 0) return SwalMin.fire('Aman', 'Tidak ada tagihan yang menunggu ACC.', 'success');
+        
+        let teks = `Halo Bapak/Ibu Yayasan *${dataUserGlobal.tenant.namaYayasan}*,\n\nMohon izin mengingatkan, saat ini terdapat *${jml} tagihan siswa* yang sedang menunggu persetujuan (ACC).\n\nMohon perkenannya untuk melakukan pengesahan melalui Portal ERP agar tagihan dapat segera terbit ke aplikasi Orang Tua.\n\nTerima kasih. 🙏`;
+        
+        Swal.fire({ title: 'Ping Yayasan', text: 'Kirim pengingat via WhatsApp?', icon: 'question', showCancelButton: true, confirmButtonText: '<i class="bi bi-whatsapp"></i> Buka WA', confirmButtonColor: '#25D366' })
+        .then(r => { if(r.isConfirmed) { window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(teks), '_blank'); } });
     }
 
     // ================= BUAT KONTRAK & MASTER TARIF =================
