@@ -285,10 +285,43 @@
       
     </div>
 
-    <!-- AREA VERIFIKASI PPDB -->
-    <div id="areaMejaVerifikasi" style="display: none; padding: 20px;">
-       <div class="alert alert-info border-0 shadow-sm rounded-4 p-3"><h6 class="fw-bold mb-1"><i class="bi bi-ui-checks me-2"></i>Meja Verifikasi PPDB</h6><p class="small mb-0">Modul Administrasi PPDB</p></div>
-       <p class="text-center text-muted">Fitur Verifikasi PPDB Anda sudah aman tersambung di database.</p>
+    <!-- AREA PPDB ORANG TUA -->
+    <div id="areaPPDBOrtu" style="display: none; padding: 20px;">
+       <div class="alert alert-info border-0 shadow-sm rounded-4 p-3 mb-4">
+           <h6 class="fw-bold mb-1"><i class="bi bi-person-plus-fill me-2"></i>Pendaftaran Murid Baru</h6>
+           <p class="small mb-0">Isi formulir untuk mendaftarkan putra-putri Anda ke jenjang yang tersedia.</p>
+       </div>
+       <div class="text-center text-muted p-5 bg-white rounded-4 shadow-sm">
+           <i class="bi bi-tools fs-1 text-secondary mb-3"></i>
+           <h5 class="fw-bold">Sedang Dibangun</h5>
+           <p class="small">Modul form pengisian PPDB akan segera hadir di sini.</p>
+       </div>
+    </div>
+
+    <!-- AREA MUTASI ORANG TUA -->
+    <div id="areaMutasiOrtu" style="display: none; padding: 20px;">
+       <div class="alert alert-warning border-0 shadow-sm rounded-4 p-3 mb-4">
+           <h6 class="fw-bold mb-1 text-dark"><i class="bi bi-arrow-left-right me-2"></i>Pengajuan Mutasi</h6>
+           <p class="small mb-0 text-dark">Ajukan perpindahan sekolah anak Anda (Masuk / Keluar).</p>
+       </div>
+       <div class="text-center text-muted p-5 bg-white rounded-4 shadow-sm">
+           <i class="bi bi-tools fs-1 text-secondary mb-3"></i>
+           <h5 class="fw-bold">Sedang Dibangun</h5>
+           <p class="small">Modul Mutasi akan terintegrasi langsung dengan tata usaha.</p>
+       </div>
+    </div>
+
+    <!-- AREA RUANG GURU -->
+    <div id="areaRuangGuru" style="display: none; padding: 20px;">
+       <div class="alert alert-primary border-0 shadow-sm rounded-4 p-3 mb-4">
+           <h6 class="fw-bold mb-1"><i class="bi bi-journal-bookmark-fill me-2"></i>Ruang Guru & Jurnal Kelas</h6>
+           <p class="small mb-0">Kelola absensi, nilai, dan perkembangan sosial-emosional siswa.</p>
+       </div>
+       <div class="text-center text-muted p-5 bg-white rounded-4 shadow-sm">
+           <i class="bi bi-tools fs-1 text-secondary mb-3"></i>
+           <h5 class="fw-bold">Sedang Dibangun</h5>
+           <p class="small">Fitur scan absensi dan buku nilai harian sedang disiapkan.</p>
+       </div>
     </div>
 
     <!-- AREA BUAT KONTRAK -->
@@ -488,22 +521,19 @@
     // ==== BUKA MODUL & SENSOR JABATAN MUTLAK ====
     function bukaModul(modulId) {
         document.getElementById('halamanDashboard').style.display = 'none'; document.getElementById('halamanModul').style.display = 'block';
-        ['areaKeuanganOrtu', 'areaKasirBendahara', 'areaBuatKontrak', 'areaEditDiskon', 'areaMejaYayasan', 'areaRekeningBank', 'areaMejaVerifikasi'].forEach(id => {
+        
+        // PERBAIKAN: Menambahkan ID ruangan baru ke dalam laci penutup otomatis
+        ['areaKeuanganOrtu', 'areaKasirBendahara', 'areaBuatKontrak', 'areaEditDiskon', 'areaMejaYayasan', 'areaRekeningBank', 'areaMejaVerifikasi', 'areaPPDBOrtu', 'areaMutasiOrtu', 'areaRuangGuru'].forEach(id => {
             if(document.getElementById(id)) document.getElementById(id).style.display = 'none';
         });
 
         if(modulId === 'keuangan_ortu') { document.getElementById('judulModul').innerText="Tagihan & Bayar"; document.getElementById('areaKeuanganOrtu').style.display='block'; fetchAnak(); }
         else if(modulId === 'kasir_keuangan') { 
             document.getElementById('judulModul').innerText="Kasir & Laporan"; document.getElementById('areaKasirBendahara').style.display='block'; 
-            
             if(dataUserGlobal.user.role.toLowerCase().includes('yayasan')) {
-                document.getElementById('bTab_validasi').style.display = 'none';
-                document.getElementById('bTab_tunai').style.display = 'none';
-                switchTabKasir('tunggak'); // Langsung buka Tab Tunggakan
+                document.getElementById('bTab_validasi').style.display = 'none'; document.getElementById('bTab_tunai').style.display = 'none'; switchTabKasir('tunggak');
             } else {
-                document.getElementById('bTab_validasi').style.display = 'inline-block';
-                document.getElementById('bTab_tunai').style.display = 'inline-block';
-                fetchSiswaTunai(); switchTabKasir('validasi');
+                document.getElementById('bTab_validasi').style.display = 'inline-block'; document.getElementById('bTab_tunai').style.display = 'inline-block'; fetchSiswaTunai(); switchTabKasir('validasi');
             }
         }
         else if(modulId === 'buat_kontrak') { document.getElementById('judulModul').innerText="Buat Kontrak"; document.getElementById('areaBuatKontrak').style.display='block'; persiapanBuatKontrak(); }
@@ -511,6 +541,11 @@
         else if(modulId === 'meja_yayasan') { document.getElementById('judulModul').innerText="ACC Tagihan"; document.getElementById('areaMejaYayasan').style.display='block'; tarikDataYayasan(); }
         else if(modulId === 'rekening') { document.getElementById('judulModul').innerText="Rekening Bank"; document.getElementById('areaRekeningBank').style.display='block'; tarikDataRekening(); }
         else if(modulId === 'verifikasi') { document.getElementById('judulModul').innerText="Verifikasi PPDB"; document.getElementById('areaMejaVerifikasi').style.display='block'; }
+        
+        // JALUR BARU UNTUK ORTU & GURU
+        else if(modulId === 'ppdb_ortu') { document.getElementById('judulModul').innerText="Murid Baru (PPDB)"; document.getElementById('areaPPDBOrtu').style.display='block'; }
+        else if(modulId === 'mutasi_ortu') { document.getElementById('judulModul').innerText="Mutasi Siswa"; document.getElementById('areaMutasiOrtu').style.display='block'; }
+        else if(modulId === 'ruang_guru' || modulId === 'absensi_qr') { document.getElementById('judulModul').innerText="Ruang Guru"; document.getElementById('areaRuangGuru').style.display='block'; }
     }
 
     // ================= E-BANKING ORTU =================
