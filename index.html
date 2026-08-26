@@ -638,15 +638,62 @@
     }
 
     function prosesBayarTunai() { 
-        SwalMin.fire({ title: 'Terima Tunai', html: `Total: <b class="text-success fs-4">${rupiah(totalTagihanDipilih)}</b><br><br><span style="font-size:13px; font-weight:bold;">Nama Penyetor (Yang Membayar):</span>`, input: 'text', inputPlaceholder: 'Cth: Ibu Maria (Ibunda Budi)', showCancelButton: true, confirmButtonText: '<i class="bi bi-check-circle"></i> Proses Tunai', confirmButtonColor: '#198754' })
-        .then(r=>{ 
-            if(r.isConfirmed){ 
-                Swal.showLoading(); 
-                fetch(API_URL, { method:"POST", body:JSON.stringify({action:'bayar_tunai', idDbFinance:dataUserGlobal.tenant.idDbFinance, idFolderFinance:dataUserGlobal.tenant.idFolderFinance, idInvoiceArray:invoiceDipilih, catatan: r.value, yayasan: dataUserGlobal.tenant.namaYayasan, sekolah: dataUserGlobal.tenant.singkatanSekolah, namaKasir: dataUserGlobal.user.nama})})
-                .then(r=>r.json()).then(res=>{ SwalMin.fire('Sukses', res.pesan, 'success'); tarikTagihanTunai(); }); 
-            } 
-        }); 
-    }
+    Swal.fire({ 
+        title: 'Terima Pembayaran Tunai', 
+        html: `
+            <div class="mb-4">
+                <span class="text-muted small">Total Tagihan Dibayar:</span><br>
+                <b class="text-success" style="font-size: 28px;">${rupiah(totalTagihanDipilih)}</b>
+            </div>
+            <div class="text-start">
+                <label class="form-label small fw-bold text-muted"><i class="bi bi-person-fill"></i> Nama Penyetor (Ortu/Wali)</label>
+                <input type="text" id="swal-input-penyetor" class="form-control form-control-lg rounded-4 shadow-sm border-success mb-3" placeholder="Cth: Ibu Maria (Ibunda Budi)">
+                
+                <label class="form-label small fw-bold text-muted"><i class="bi bi-card-text"></i> Catatan Tambahan (Opsional)</label>
+                <textarea id="swal-input-catatan" class="form-control rounded-4 shadow-sm border-success" rows="2" placeholder="Cth: Uang pas, titipan dari..."></textarea>
+            </div>
+        `,
+        showCancelButton: true, 
+        confirmButtonText: '<i class="bi bi-printer"></i> Proses & Cetak', 
+        cancelButtonText: 'Batal',
+        confirmButtonColor: '#198754',
+        customClass: { popup: 'rounded-4 shadow-lg border-0' },
+        preConfirm: () => { 
+            const penyetor = document.getElementById('swal-input-penyetor').value;
+            const catatan = document.getElementById('swal-input-catatan').value;
+            
+            if(!penyetor) { 
+                Swal.showValidationMessage('Nama penyetor wajib diisi!'); 
+                return false;
+            }
+            
+            // Menggabungkan nama penyetor dan catatan untuk masuk ke E-Kwitansi
+            let catatanGabungan = penyetor;
+            if (catatan) catatanGabungan += " (" + catatan + ")";
+            return catatanGabungan;
+        } 
+    }).then(r=>{ 
+        if(r.isConfirmed){ 
+            Swal.fire({title: 'Memproses Transaksi...', allowOutsideClick: false, didOpen: () => {Swal.showLoading()}}); 
+            fetch(API_URL, { 
+                method: "POST", 
+                body: JSON.stringify({
+                    action: 'bayar_tunai', 
+                    idDbFinance: dataUserGlobal.tenant.idDbFinance, 
+                    idFolderFinance: dataUserGlobal.tenant.idFolderFinance, 
+                    idInvoiceArray: invoiceDipilih, 
+                    catatan: r.value, 
+                    yayasan: dataUserGlobal.tenant.namaYayasan, 
+                    sekolah: dataUserGlobal.tenant.singkatanSekolah, 
+                    namaKasir: dataUserGlobal.user.nama
+                })
+            }).then(r=>r.json()).then(res=>{ 
+                Swal.fire('Sukses', res.pesan, 'success'); 
+                tarikTagihanTunai(); 
+            }); 
+        } 
+    }); 
+}
 
     // ==== RADAR TUNGGAKAN (SENSOR YAYASAN MURNI) ====
     function loadTunggakan() {
