@@ -473,6 +473,10 @@
         } else if (role.includes('admin') || role.includes('kepala')) {
             htmlMenu += `<div class="menu-card" onclick='bukaModul("verifikasi")'><div class="menu-icon-wrap"><i class="bi bi-ui-checks"></i></div><p class="menu-title fw-bold text-dark">Meja Verifikasi</p></div>`;
             htmlMenu += `<div class="menu-card" onclick='bukaModul("meja_yayasan")'><div class="menu-icon-wrap"><i class="bi bi-bank"></i></div><p class="menu-title fw-bold text-dark">ACC Tagihan</p></div>`;
+          else if (role.includes('guru') || role.includes('wali kelas') || role.includes('teacher')) {
+            htmlMenu += `<div class="menu-card" onclick='bukaModul("ruang_guru")'><div class="menu-icon-wrap"><i class="bi bi-journal-bookmark-fill text-primary"></i></div><p class="menu-title fw-bold text-dark">Jurnal & Kelas</p></div>`;
+            htmlMenu += `<div class="menu-card" onclick='bukaModul("absensi_qr")'><div class="menu-icon-wrap"><i class="bi bi-qr-code-scan text-success"></i></div><p class="menu-title fw-bold text-dark">Scan Kehadiran</p></div>`;
+        }
         } else {
             htmlMenu += `<div class="menu-card" onclick='bukaModul("keuangan_ortu")'><div class="menu-icon-wrap"><i class="bi bi-wallet2"></i></div><p class="menu-title fw-bold text-dark">Tagihan & Bayar</p></div>`;
         }
