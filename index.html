@@ -453,7 +453,6 @@
     function logout() { SwalMin.fire({title: 'Keluar?', icon: 'question', showCancelButton: true, confirmButtonText: 'Ya', cancelButtonText: 'Batal'}).then((r) => { if(r.isConfirmed) { try { localStorage.removeItem('sesiPortalNCIPS'); } catch(err) {} window.top.location.reload(); }}); }
 
     // ==== RENDER MENU DASHBOARD ====
-    // ==== RENDER MENU DASHBOARD ====
     function renderMenu() {
         document.getElementById('halamanLogin').style.display = 'none'; document.getElementById('halamanDashboard').style.display = 'block';
         document.getElementById('namaSekolahNav').innerHTML = `<i class="bi bi-buildings me-2"></i>` + dataUserGlobal.tenant.namaSekolah;
@@ -478,7 +477,9 @@
             htmlMenu += `<div class="menu-card" onclick='bukaModul("ruang_guru")'><div class="menu-icon-wrap"><i class="bi bi-journal-bookmark-fill text-primary"></i></div><p class="menu-title fw-bold text-dark">Jurnal & Kelas</p></div>`;
             htmlMenu += `<div class="menu-card" onclick='bukaModul("absensi_qr")'><div class="menu-icon-wrap"><i class="bi bi-qr-code-scan text-success"></i></div><p class="menu-title fw-bold text-dark">Scan Kehadiran</p></div>`;
         } else {
-            htmlMenu += `<div class="menu-card" onclick='bukaModul("keuangan_ortu")'><div class="menu-icon-wrap"><i class="bi bi-wallet2"></i></div><p class="menu-title fw-bold text-dark">Tagihan & Bayar</p></div>`;
+            htmlMenu += `<div class="menu-card" onclick='bukaModul("keuangan_ortu")'><div class="menu-icon-wrap"><i class="bi bi-wallet2 text-danger"></i></div><p class="menu-title fw-bold text-dark">Tagihan & Bayar</p></div>`;
+            htmlMenu += `<div class="menu-card" onclick='bukaModul("ppdb_ortu")'><div class="menu-icon-wrap"><i class="bi bi-person-plus-fill text-info"></i></div><p class="menu-title fw-bold text-dark">Murid Baru</p></div>`;
+            htmlMenu += `<div class="menu-card" onclick='bukaModul("mutasi_ortu")'><div class="menu-icon-wrap"><i class="bi bi-arrow-left-right text-warning"></i></div><p class="menu-title fw-bold text-dark">Mutasi Siswa</p></div>`;
         }
         
         document.getElementById('areaMenu').innerHTML = htmlMenu;
