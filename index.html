@@ -1226,11 +1226,6 @@
     function hapusRek(id) { SwalMin.fire({title:'Hapus Rekening?', icon:'warning', showCancelButton:true, confirmButtonText:'Ya, Hapus'}).then(r=>{ if(r.isConfirmed){ fetch(API_URL, {method:"POST", body:JSON.stringify({action:'hapus_rekening', idDbFinance:dataUserGlobal.tenant.idDbFinance, idRek:id})}).then(r=>r.json()).then(res=>{ if(res.status==='success') tarikDataRekening(); }); }}); }
 
     
-  </script>
-</body>
-</html>
-
-
 // ==== KIRIM FORMULIR PPDB ORTU ====
     document.addEventListener('submit', async function(e) {
         if(e.target && e.target.id === 'formPPDBUtama') {
@@ -1285,3 +1280,10 @@
             }
         }
     });
+
+
+    
+  </script>
+</body>
+</html>
+
