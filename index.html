@@ -331,66 +331,86 @@
       
     </div>
 
-    <!-- AREA PPDB ORANG TUA -->
-    <div id="areaPPDBOrtu" style="display: none; padding: 20px;">
-       <div class="alert alert-info border-0 shadow-sm rounded-4 p-3 mb-4 d-flex align-items-center" style="background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);">
-           <div class="bg-white p-2 rounded-3 me-3 shadow-sm"><i class="bi bi-person-plus-fill fs-3 text-info"></i></div>
-           <div>
-               <h6 class="fw-bold mb-1 text-dark">Pendaftaran Murid Baru</h6>
-               <p class="small mb-0 text-muted">Formulir PPDB Online NCIPS</p>
-           </div>
-       </div>
-       
-       <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
-         <form id="formPPDBUtama">
-           <h6 class="fw-bold text-dark mb-3"><i class="bi bi-1-circle-fill text-danger me-2"></i>Data Calon Siswa</h6>
-           <div class="mb-3">
-               <label class="form-label small fw-bold text-muted">Nama Lengkap Anak</label>
-               <input type="text" class="form-control bg-light border-0 py-2" id="ppdbNamaAnak" required placeholder="Sesuai Akte Kelahiran">
-           </div>
-           <div class="row g-2 mb-3">
-              <div class="col-6">
-                  <label class="form-label small fw-bold text-muted">Tempat Lahir</label>
-                  <input type="text" class="form-control bg-light border-0 py-2" id="ppdbTempatLahir" required>
-              </div>
-              <div class="col-6">
-                  <label class="form-label small fw-bold text-muted">Tanggal Lahir</label>
-                  <input type="date" class="form-control bg-light border-0 py-2" id="ppdbTglLahir" required>
-              </div>
-           </div>
-           <div class="mb-4">
-               <label class="form-label small fw-bold text-muted">Mendaftar Untuk Jenjang</label>
-               <select class="form-select bg-light border-0 py-2 fw-bold" id="ppdbJenjang" required>
-                   <option value="">-- Pilih Jenjang Pendidikan --</option>
-                   <option value="TK">TK (Taman Kanak-Kanak)</option>
-                   <option value="SD">SD (Sekolah Dasar)</option>
-                   <option value="SMP">SMP (Sekolah Menengah Pertama)</option>
-                   <option value="SMA">SMA (Sekolah Menengah Atas)</option>
-               </select>
-           </div>
-           
-           <h6 class="fw-bold text-dark mb-3 pt-3 border-top"><i class="bi bi-2-circle-fill text-danger me-2"></i>Data Penanggung Jawab</h6>
-           <div class="mb-3">
-               <label class="form-label small fw-bold text-muted">Nama Orang Tua / Wali</label>
-               <input type="text" class="form-control bg-light border-0 py-2" id="ppdbNamaWali" required>
-           </div>
-           <div class="mb-4">
-               <label class="form-label small fw-bold text-muted">Nomor WhatsApp Aktif</label>
-               <input type="number" class="form-control bg-light border-0 py-2" id="ppdbNoWA" required placeholder="Cth: 08123456789">
-           </div>
-           
-           <h6 class="fw-bold text-dark mb-3 pt-3 border-top"><i class="bi bi-3-circle-fill text-danger me-2"></i>Berkas Pendukung</h6>
-           <p class="small text-muted mb-2">Upload foto Akte Kelahiran atau Kartu Keluarga (KK).</p>
-           <label class="file-upload-box w-100 border-secondary shadow-sm mb-4" id="boxBuktiPPDB" style="border: 2px dashed #ccc; display:block; padding: 20px; text-align: center; border-radius: 12px; cursor: pointer;">
-               <i class="bi bi-file-earmark-arrow-up fs-1 text-secondary" id="ikonBuktiPPDB"></i>
-               <p class="small fw-bold mt-2 mb-0 text-secondary" id="teksBuktiPPDB">Ketuk untuk Upload Dokumen</p>
-               <input type="file" id="fileBuktiPPDB" accept="image/*,application/pdf" onchange="previewFile('fileBuktiPPDB', 'ikonBuktiPPDB', 'teksBuktiPPDB')" style="display:none;" required>
-           </label>
-           
-           <button type="submit" id="btnSubmitPPDB" class="btn-emboss mt-3 shadow-sm text-uppercase" style="letter-spacing: 1px;"><i class="bi bi-send-fill me-2"></i>Kirim Pendaftaran</button>
-         </form>
-       </div>
-    </div>
+    // ================= MANAJEMEN REKENING BANK =================
+    function tarikDataRekening() { const wadah = document.getElementById('listRekeningContainer'); wadah.innerHTML = `<div class="text-center mt-5"><div class="spinner-border text-success"></div></div>`; fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_rekening', idDbFinance: dataUserGlobal.tenant.idDbFinance }) }).then(r=>r.json()).then(res=>{ if(res.status==='success') { bankAccounts = res.data; if(res.data.length===0) { wadah.innerHTML = `<p class="text-center mt-4">Belum ada rekening.</p>`; return; } let html = ""; res.data.forEach(r => { html += `<div class="card border-success border-2 shadow-sm rounded-4 mb-3 p-3"><div class="d-flex justify-content-between align-items-center"><div><h5 class="fw-bold text-dark mb-0" style="letter-spacing:1px;">${r.no_rek}</h5><div class="fw-bold text-success">${r.nama_bank}</div><small class="text-muted">a.n. ${r.atas_nama}</small></div><button class="btn btn-outline-danger btn-sm rounded-circle" onclick="hapusRek('${r.id_rek}')"><i class="bi bi-trash"></i></button></div></div>`; }); wadah.innerHTML = html; } }); }
+    document.getElementById('formTambahRek').addEventListener('submit', function(e){ e.preventDefault(); const btn = document.getElementById('btnSimpanRek'); btn.innerHTML='Menyimpan...'; btn.disabled=true; const payload = { nama_bank: document.getElementById('inpNamaBank').value, no_rek: document.getElementById('inpNoRek').value, atas_nama: document.getElementById('inpAtasNama').value }; fetch(API_URL, { method:"POST", body:JSON.stringify({action:'simpan_rekening', idDbFinance: dataUserGlobal.tenant.idDbFinance, data: payload}) }).then(r=>r.json()).then(res=>{ btn.innerHTML='Simpan'; btn.disabled=false; if(res.status==='success') { document.getElementById('modalTambahRekening').style.display='none'; document.getElementById('formTambahRek').reset(); Toast.fire({icon:'success', title:'Tersimpan'}); tarikDataRekening(); }}); });
+    function hapusRek(id) { SwalMin.fire({title:'Hapus Rekening?', icon:'warning', showCancelButton:true, confirmButtonText:'Ya, Hapus'}).then(r=>{ if(r.isConfirmed){ fetch(API_URL, {method:"POST", body:JSON.stringify({action:'hapus_rekening', idDbFinance:dataUserGlobal.tenant.idDbFinance, idRek:id})}).then(r=>r.json()).then(res=>{ if(res.status==='success') tarikDataRekening(); }); }}); }
+
+    // ==== MESIN BANTUAN UNGGAH BANYAK FILE ====
+    async function dapatkanB64(idFile) {
+        let el = document.getElementById(idFile);
+        if(el && el.files[0]) {
+            let b64 = await toBase64(el.files[0]);
+            return { b64: b64, name: el.files[0].name };
+        }
+        return null;
+    }
+
+    // ==== KIRIM FORMULIR PPDB LENGKAP ====
+    document.addEventListener('submit', async function(e) {
+        if(e.target && e.target.id === 'formPPDBUtama') {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmitPPDB');
+            btn.innerHTML = 'Mengunggah Berkas...';
+            btn.disabled = true;
+
+            try {
+                // Konversi semua file secara pararel agar cepat
+                const [fKK, fAkta, fRaport, fMutasi] = await Promise.all([
+                    dapatkanB64('fileKK'), dapatkanB64('fileAkta'), dapatkanB64('fileRaport'), dapatkanB64('fileMutasi')
+                ]);
+
+                const payload = {
+                    emailOrangTua: dataUserGlobal.user.email,
+                    jalur: document.getElementById('ppdbJalur').value,
+                    jenjang: document.getElementById('ppdbJenjang').value,
+                    namaAnak: document.getElementById('ppdbNamaAnak').value,
+                    tempatLahir: document.getElementById('ppdbTempatLahir').value,
+                    tglLahir: document.getElementById('ppdbTglLahir').value,
+                    nik: document.getElementById('ppdbNIK').value || "-",
+                    nisn: document.getElementById('ppdbNISN').value || "-",
+                    provinsi: document.getElementById('ppdbProvinsi').value,
+                    kabKota: document.getElementById('ppdbKabKota').value,
+                    kecamatan: document.getElementById('ppdbKecamatan').value,
+                    namaWali: document.getElementById('ppdbNamaWali').value,
+                    noWA: document.getElementById('ppdbNoWA').value,
+                    sekolahAsal: document.getElementById('ppdbSekolahAsal').value || "-",
+                    tahunLulus: document.getElementById('ppdbTahunLulus').value || "-",
+                    paudFormal: document.getElementById('ppdbPaudFormal').value,
+                    paudNonFormal: document.getElementById('ppdbPaudNonFormal').value,
+                    fileKK: fKK,
+                    fileAkta: fAkta,
+                    fileRaport: fRaport,
+                    fileMutasi: fMutasi
+                };
+
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    body: JSON.stringify({ action: 'submit_ppdb', data: payload, idFolder: dataUserGlobal.tenant.idFolderFinance })
+                }).then(r => r.json());
+
+                btn.innerHTML = '<i class="bi bi-send-fill me-2"></i>Kirim Pendaftaran';
+                btn.disabled = false;
+
+                if(res.status === 'success') {
+                    SwalMin.fire({ title: 'Berhasil!', text: res.pesan, icon: 'success' });
+                    document.getElementById('formPPDBUtama').reset();
+                    // Kembalikan ikon upload ke awal
+                    ['KK', 'Akta', 'Raport', 'Mutasi'].forEach(jenis => {
+                       document.getElementById('ikon' + jenis).className = "bi bi-file-text fs-3 text-secondary";
+                       document.getElementById('teks' + jenis).innerText = jenis === 'KK' ? "Kartu Keluarga (KK)" : (jenis === 'Akta' ? "Akte Kelahiran" : (jenis === 'Raport' ? "Raport Terakhir" : "Surat Mutasi"));
+                    });
+                } else {
+                    SwalMin.fire({ title: 'Gagal', text: res.pesan, icon: 'error' });
+                }
+            } catch(err) {
+                btn.innerHTML = '<i class="bi bi-send-fill me-2"></i>Kirim Pendaftaran';
+                btn.disabled = false;
+                SwalMin.fire('Error Server', err.message, 'error');
+            }
+        }
+    });
+
 
     <!-- AREA MUTASI ORANG TUA -->
     <div id="areaMutasiOrtu" style="display: none; padding: 20px;">
@@ -1270,167 +1290,8 @@
     function tarikDataRekening() { const wadah = document.getElementById('listRekeningContainer'); wadah.innerHTML = `<div class="text-center mt-5"><div class="spinner-border text-success"></div></div>`; fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_rekening', idDbFinance: dataUserGlobal.tenant.idDbFinance }) }).then(r=>r.json()).then(res=>{ if(res.status==='success') { bankAccounts = res.data; if(res.data.length===0) { wadah.innerHTML = `<p class="text-center mt-4">Belum ada rekening.</p>`; return; } let html = ""; res.data.forEach(r => { html += `<div class="card border-success border-2 shadow-sm rounded-4 mb-3 p-3"><div class="d-flex justify-content-between align-items-center"><div><h5 class="fw-bold text-dark mb-0" style="letter-spacing:1px;">${r.no_rek}</h5><div class="fw-bold text-success">${r.nama_bank}</div><small class="text-muted">a.n. ${r.atas_nama}</small></div><button class="btn btn-outline-danger btn-sm rounded-circle" onclick="hapusRek('${r.id_rek}')"><i class="bi bi-trash"></i></button></div></div>`; }); wadah.innerHTML = html; } }); }
     document.getElementById('formTambahRek').addEventListener('submit', function(e){ e.preventDefault(); const btn = document.getElementById('btnSimpanRek'); btn.innerHTML='Menyimpan...'; btn.disabled=true; const payload = { nama_bank: document.getElementById('inpNamaBank').value, no_rek: document.getElementById('inpNoRek').value, atas_nama: document.getElementById('inpAtasNama').value }; fetch(API_URL, { method:"POST", body:JSON.stringify({action:'simpan_rekening', idDbFinance: dataUserGlobal.tenant.idDbFinance, data: payload}) }).then(r=>r.json()).then(res=>{ btn.innerHTML='Simpan'; btn.disabled=false; if(res.status==='success') { document.getElementById('modalTambahRekening').style.display='none'; document.getElementById('formTambahRek').reset(); Toast.fire({icon:'success', title:'Tersimpan'}); tarikDataRekening(); }}); });
     function hapusRek(id) { SwalMin.fire({title:'Hapus Rekening?', icon:'warning', showCancelButton:true, confirmButtonText:'Ya, Hapus'}).then(r=>{ if(r.isConfirmed){ fetch(API_URL, {method:"POST", body:JSON.stringify({action:'hapus_rekening', idDbFinance:dataUserGlobal.tenant.idDbFinance, idRek:id})}).then(r=>r.json()).then(res=>{ if(res.status==='success') tarikDataRekening(); }); }}); }
-
-    
-<!-- AREA PPDB ORANG TUA -->
-    <div id="areaPPDBOrtu" style="display: none; padding: 20px;">
-       <div class="alert alert-info border-0 shadow-sm rounded-4 p-3 mb-4 d-flex align-items-center" style="background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);">
-           <div class="bg-white p-2 rounded-3 me-3 shadow-sm"><i class="bi bi-person-plus-fill fs-3 text-info"></i></div>
-           <div><h6 class="fw-bold mb-1 text-dark">Pendaftaran Murid Baru</h6><p class="small mb-0 text-muted">Formulir Lengkap PPDB NCIPS</p></div>
-       </div>
-       
-       <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
-         <form id="formPPDBUtama">
-           <h6 class="fw-bold text-dark mb-3"><i class="bi bi-1-circle-fill text-danger me-2"></i>Pendaftaran</h6>
-           <div class="row g-2 mb-3">
-              <div class="col-6"><label class="form-label small fw-bold text-muted">Jalur Pendaftaran</label><select class="form-select bg-light border-0 py-2" id="ppdbJalur" required><option value="Reguler">Reguler</option><option value="Prestasi">Prestasi</option><option value="Afirmasi">Afirmasi</option><option value="Pindahan">Pindahan / Mutasi</option></select></div>
-              <div class="col-6"><label class="form-label small fw-bold text-muted">Kelas Tujuan</label><select class="form-select bg-light border-0 py-2" id="ppdbJenjang" required><option value="">-- Pilih --</option><option value="TK">TK</option><option value="SD">SD</option><option value="SMP">SMP</option></select></div>
-           </div>
-
-           <h6 class="fw-bold text-dark mb-3 pt-3 border-top"><i class="bi bi-2-circle-fill text-danger me-2"></i>Identitas Calon Siswa</h6>
-           <div class="mb-3"><label class="form-label small fw-bold text-muted">Nama Lengkap Anak</label><input type="text" class="form-control bg-light border-0 py-2" id="ppdbNamaAnak" required></div>
-           <div class="row g-2 mb-3">
-              <div class="col-6"><label class="form-label small fw-bold text-muted">Tempat Lahir</label><input type="text" class="form-control bg-light border-0 py-2" id="ppdbTempatLahir" required></div>
-              <div class="col-6"><label class="form-label small fw-bold text-muted">Tanggal Lahir</label><input type="date" class="form-control bg-light border-0 py-2" id="ppdbTglLahir" required></div>
-           </div>
-           <div class="row g-2 mb-3">
-              <div class="col-6"><label class="form-label small fw-bold text-muted">NIK (No. KTP Anak)</label><input type="number" class="form-control bg-light border-0 py-2" id="ppdbNIK" placeholder="16 Digit"></div>
-              <div class="col-6"><label class="form-label small fw-bold text-muted">NISN (Bila Ada)</label><input type="number" class="form-control bg-light border-0 py-2" id="ppdbNISN" placeholder="10 Digit"></div>
-           </div>
-
-           <h6 class="fw-bold text-dark mb-3 pt-3 border-top"><i class="bi bi-3-circle-fill text-danger me-2"></i>Alamat & Kontak Wali</h6>
-           <div class="row g-2 mb-3">
-              <div class="col-4"><label class="form-label small fw-bold text-muted">Provinsi</label><input type="text" class="form-control bg-light border-0 py-2" id="ppdbProvinsi" required></div>
-              <div class="col-4"><label class="form-label small fw-bold text-muted">Kab/Kota</label><input type="text" class="form-control bg-light border-0 py-2" id="ppdbKabKota" required></div>
-              <div class="col-4"><label class="form-label small fw-bold text-muted">Kecamatan</label><input type="text" class="form-control bg-light border-0 py-2" id="ppdbKecamatan" required></div>
-           </div>
-           <div class="row g-2 mb-3">
-              <div class="col-6"><label class="form-label small fw-bold text-muted">Nama Orang Tua/Wali</label><input type="text" class="form-control bg-light border-0 py-2" id="ppdbNamaWali" required></div>
-              <div class="col-6"><label class="form-label small fw-bold text-muted">No. WhatsApp Aktif</label><input type="number" class="form-control bg-light border-0 py-2" id="ppdbNoWA" required></div>
-           </div>
-
-           <h6 class="fw-bold text-dark mb-3 pt-3 border-top"><i class="bi bi-4-circle-fill text-danger me-2"></i>Riwayat Pendidikan</h6>
-           <div class="row g-2 mb-3">
-              <div class="col-8"><label class="form-label small fw-bold text-muted">Sekolah Asal</label><input type="text" class="form-control bg-light border-0 py-2" id="ppdbSekolahAsal" placeholder="Cth: TK Bintang / SD Negeri 1"></div>
-              <div class="col-4"><label class="form-label small fw-bold text-muted">Tahun Lulus</label><input type="number" class="form-control bg-light border-0 py-2" id="ppdbTahunLulus" placeholder="2024"></div>
-           </div>
-           <div class="row g-2 mb-3">
-              <div class="col-6"><label class="form-label small fw-bold text-muted">PAUD Formal (TK)</label><select class="form-select bg-light border-0 py-2" id="ppdbPaudFormal"><option value="Pernah">Pernah</option><option value="Tidak Pernah">Tidak Pernah</option></select></div>
-              <div class="col-6"><label class="form-label small fw-bold text-muted">PAUD Non-Formal (KB)</label><select class="form-select bg-light border-0 py-2" id="ppdbPaudNonFormal"><option value="Pernah">Pernah</option><option value="Tidak Pernah">Tidak Pernah</option></select></div>
-           </div>
-           
-           <h6 class="fw-bold text-dark mb-3 pt-3 border-top"><i class="bi bi-5-circle-fill text-danger me-2"></i>Berkas Pendukung</h6>
-           <p class="small text-muted mb-3">Format Gambar/PDF. Biarkan kosong bila berkas belum siap (dapat disusulkan).</p>
-           
-           <div class="row g-3 mb-4">
-               <div class="col-6">
-                   <label class="file-upload-box w-100 border-secondary shadow-sm p-3 mb-0 text-center" style="border: 2px dashed #ccc; border-radius: 12px; cursor: pointer;">
-                       <i class="bi bi-file-text fs-3 text-secondary" id="ikonKK"></i><p class="small fw-bold mt-1 mb-0 text-secondary" id="teksKK">Kartu Keluarga (KK)</p>
-                       <input type="file" id="fileKK" accept="image/*,application/pdf" onchange="previewFile('fileKK', 'ikonKK', 'teksKK')" style="display:none;">
-                   </label>
-               </div>
-               <div class="col-6">
-                   <label class="file-upload-box w-100 border-secondary shadow-sm p-3 mb-0 text-center" style="border: 2px dashed #ccc; border-radius: 12px; cursor: pointer;">
-                       <i class="bi bi-person-badge fs-3 text-secondary" id="ikonAkta"></i><p class="small fw-bold mt-1 mb-0 text-secondary" id="teksAkta">Akte Kelahiran</p>
-                       <input type="file" id="fileAkta" accept="image/*,application/pdf" onchange="previewFile('fileAkta', 'ikonAkta', 'teksAkta')" style="display:none;">
-                   </label>
-               </div>
-               <div class="col-6">
-                   <label class="file-upload-box w-100 border-secondary shadow-sm p-3 mb-0 text-center" style="border: 2px dashed #ccc; border-radius: 12px; cursor: pointer;">
-                       <i class="bi bi-journal-text fs-3 text-secondary" id="ikonRaport"></i><p class="small fw-bold mt-1 mb-0 text-secondary" id="teksRaport">Raport Terakhir</p>
-                       <input type="file" id="fileRaport" accept="image/*,application/pdf" onchange="previewFile('fileRaport', 'ikonRaport', 'teksRaport')" style="display:none;">
-                   </label>
-               </div>
-               <div class="col-6">
-                   <label class="file-upload-box w-100 border-secondary shadow-sm p-3 mb-0 text-center" style="border: 2px dashed #ccc; border-radius: 12px; cursor: pointer;">
-                       <i class="bi bi-arrow-left-right fs-3 text-secondary" id="ikonMutasi"></i><p class="small fw-bold mt-1 mb-0 text-secondary" id="teksMutasi">Surat Mutasi</p>
-                       <input type="file" id="fileMutasi" accept="image/*,application/pdf" onchange="previewFile('fileMutasi', 'ikonMutasi', 'teksMutasi')" style="display:none;">
-                   </label>
-               </div>
-           </div>
-           
-           <button type="submit" id="btnSubmitPPDB" class="btn-emboss mt-2 shadow-sm text-uppercase"><i class="bi bi-send-fill me-2"></i>Kirim Pendaftaran</button>
-         </form>
-       </div>
-    </div>
-
-
-    
+   
   </script>
-  // ==== MESIN BANTUAN UNGGAH BANYAK FILE ====
-    async function dapatkanB64(idFile) {
-        let el = document.getElementById(idFile);
-        if(el && el.files[0]) {
-            let b64 = await toBase64(el.files[0]);
-            return { b64: b64, name: el.files[0].name };
-        }
-        return null;
-    }
-
-    // ==== KIRIM FORMULIR PPDB LENGKAP ====
-    document.addEventListener('submit', async function(e) {
-        if(e.target && e.target.id === 'formPPDBUtama') {
-            e.preventDefault();
-            const btn = document.getElementById('btnSubmitPPDB');
-            btn.innerHTML = 'Mengunggah Berkas...';
-            btn.disabled = true;
-
-            try {
-                // Konversi semua file secara pararel agar cepat
-                const [fKK, fAkta, fRaport, fMutasi] = await Promise.all([
-                    dapatkanB64('fileKK'), dapatkanB64('fileAkta'), dapatkanB64('fileRaport'), dapatkanB64('fileMutasi')
-                ]);
-
-                const payload = {
-                    emailOrangTua: dataUserGlobal.user.email,
-                    jalur: document.getElementById('ppdbJalur').value,
-                    jenjang: document.getElementById('ppdbJenjang').value,
-                    namaAnak: document.getElementById('ppdbNamaAnak').value,
-                    tempatLahir: document.getElementById('ppdbTempatLahir').value,
-                    tglLahir: document.getElementById('ppdbTglLahir').value,
-                    nik: document.getElementById('ppdbNIK').value || "-",
-                    nisn: document.getElementById('ppdbNISN').value || "-",
-                    provinsi: document.getElementById('ppdbProvinsi').value,
-                    kabKota: document.getElementById('ppdbKabKota').value,
-                    kecamatan: document.getElementById('ppdbKecamatan').value,
-                    namaWali: document.getElementById('ppdbNamaWali').value,
-                    noWA: document.getElementById('ppdbNoWA').value,
-                    sekolahAsal: document.getElementById('ppdbSekolahAsal').value || "-",
-                    tahunLulus: document.getElementById('ppdbTahunLulus').value || "-",
-                    paudFormal: document.getElementById('ppdbPaudFormal').value,
-                    paudNonFormal: document.getElementById('ppdbPaudNonFormal').value,
-                    fileKK: fKK,
-                    fileAkta: fAkta,
-                    fileRaport: fRaport,
-                    fileMutasi: fMutasi
-                };
-
-                const res = await fetch(API_URL, {
-                    method: "POST",
-                    body: JSON.stringify({ action: 'submit_ppdb', data: payload, idFolder: dataUserGlobal.tenant.idFolderFinance })
-                }).then(r => r.json());
-
-                btn.innerHTML = '<i class="bi bi-send-fill me-2"></i>Kirim Pendaftaran';
-                btn.disabled = false;
-
-                if(res.status === 'success') {
-                    SwalMin.fire({ title: 'Berhasil!', text: res.pesan, icon: 'success' });
-                    document.getElementById('formPPDBUtama').reset();
-                    // Kembalikan ikon upload ke awal
-                    ['KK', 'Akta', 'Raport', 'Mutasi'].forEach(jenis => {
-                       document.getElementById('ikon' + jenis).className = "bi bi-file-text fs-3 text-secondary";
-                       document.getElementById('teks' + jenis).innerText = jenis === 'KK' ? "Kartu Keluarga (KK)" : (jenis === 'Akta' ? "Akte Kelahiran" : (jenis === 'Raport' ? "Raport Terakhir" : "Surat Mutasi"));
-                    });
-                } else {
-                    SwalMin.fire({ title: 'Gagal', text: res.pesan, icon: 'error' });
-                }
-            } catch(err) {
-                btn.innerHTML = '<i class="bi bi-send-fill me-2"></i>Kirim Pendaftaran';
-                btn.disabled = false;
-                SwalMin.fire('Error Server', err.message, 'error');
-            }
-        }
-    });
 </body>
 </html>
 
