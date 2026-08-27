@@ -319,6 +319,7 @@
                    <option value="TK">TK (Taman Kanak-Kanak)</option>
                    <option value="SD">SD (Sekolah Dasar)</option>
                    <option value="SMP">SMP (Sekolah Menengah Pertama)</option>
+                   <option value="SMA">SMA (Sekolah Menengah Atas)</option>
                </select>
            </div>
            
@@ -1228,3 +1229,59 @@
   </script>
 </body>
 </html>
+
+
+// ==== KIRIM FORMULIR PPDB ORTU ====
+    document.addEventListener('submit', async function(e) {
+        if(e.target && e.target.id === 'formPPDBUtama') {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmitPPDB');
+            btn.innerHTML = 'Mengirim Berkas...';
+            btn.disabled = true;
+
+            try {
+                let fileObj = null;
+                const fileInput = document.getElementById('fileBuktiPPDB');
+                if(fileInput && fileInput.files[0]) {
+                    const b64 = await toBase64(fileInput.files[0]);
+                    fileObj = { b64: b64, name: fileInput.files[0].name };
+                }
+
+                const payload = {
+                    emailOrangTua: dataUserGlobal.user.email,
+                    namaAnak: document.getElementById('ppdbNamaAnak').value,
+                    tempatLahir: document.getElementById('ppdbTempatLahir').value,
+                    tglLahir: document.getElementById('ppdbTglLahir').value,
+                    jenjang: document.getElementById('ppdbJenjang').value,
+                    namaWali: document.getElementById('ppdbNamaWali').value,
+                    noWA: document.getElementById('ppdbNoWA').value,
+                    fileDokumen: fileObj
+                };
+
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        action: 'submit_ppdb',
+                        data: payload,
+                        idFolder: dataUserGlobal.tenant.idFolderFinance // Menggunakan folder tenant yang tersedia
+                    })
+                }).then(r => r.json());
+
+                btn.innerHTML = '<i class="bi bi-send-fill me-2"></i>Kirim Pendaftaran';
+                btn.disabled = false;
+
+                if(res.status === 'success') {
+                    SwalMin.fire({ title: 'Berhasil!', text: res.pesan, icon: 'success' });
+                    document.getElementById('formPPDBUtama').reset();
+                    document.getElementById('teksBuktiPPDB').innerText = "Ketuk untuk Upload Dokumen";
+                    document.getElementById('ikonBuktiPPDB').className = "bi bi-file-earmark-arrow-up fs-1 text-secondary";
+                } else {
+                    SwalMin.fire({ title: 'Gagal', text: res.pesan, icon: 'error' });
+                }
+            } catch(err) {
+                btn.innerHTML = '<i class="bi bi-send-fill me-2"></i>Kirim Pendaftaran';
+                btn.disabled = false;
+                SwalMin.fire('Error Server', err.message, 'error');
+            }
+        }
+    });
