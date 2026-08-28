@@ -560,7 +560,7 @@
     let dataLaporanGlobal = null;
     
     // MASUKKAN API URL DISINI YA MAS BRO!
-    const API_URL = "https://script.google.com/macros/s/AKfycbx41Vf1p_AjlFs72EXvaIpGV0MLBJP7IxTCUzTJpgmFUll6gS3bG3Yh4OBW_9gytiGsNQ/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbxpq2_3BanzoKCjz2WZS5-yxe2C0JV_-o3Xzs6Z2sI62mCPYKuNHFMinTydRKc1sbVfsg/exec";
 
     const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
     const SwalMin = Swal.mixin({ customClass: { popup: 'minimalis-popup shadow-lg', title: 'minimalis-title text-dark fw-bold', htmlContainer: 'minimalis-text text-muted', confirmButton: 'btn btn-danger btn-sm mx-1 px-4 rounded-3 fw-bold', cancelButton: 'btn btn-light btn-sm mx-1 px-4 border rounded-3 fw-bold' }, buttonsStyling: false });
@@ -1308,21 +1308,22 @@
                     dapatkanB64('fileAkta'), dapatkanB64('fileKK')
                 ]);
 
-                // Mapping variabel presisi sesuai instruksi
+                // Mapping presisi menembak langsung ke form yang aktif
                 const payload = {
                     emailOrangTua: dataUserGlobal.user.email,
-                    Nama_Calon_Siswa: document.getElementById('ppdbNamaAnak').value,
-                    Tempat_Lahir: document.getElementById('ppdbTempatLahir').value,
-                    Tgl_Lahir: document.getElementById('ppdbTglLahir').value,
-                    NISN: document.getElementById('ppdbNISN').value,
-                    NIK: document.getElementById('ppdbNIK').value,
-                    Provinsi_Asal: document.getElementById('ppdbProvinsi').value,
-                    KabKota_Asal: document.getElementById('ppdbKabKota').value,
-                    Kecamatan_Asal: document.getElementById('ppdbKecamatan').value,
-                    Sekolah_Asal: document.getElementById('ppdbSekolahAsal').value,
-                    Tahun_Lulus: document.getElementById('ppdbTahunLulus').value,
-                    PAUD_Formal: document.getElementById('ppdbPaudFormal').value,
-                    PAUD_Non_Formal: document.getElementById('ppdbPaudNonFormal').value,
+                    Jalur_Pendaftaran: document.querySelector('#formPPDBUtama #ppdbJalur').value,
+                    Nama_Calon_Siswa: document.querySelector('#formPPDBUtama #ppdbNamaAnak').value,
+                    Tempat_Lahir: document.querySelector('#formPPDBUtama #ppdbTempatLahir').value,
+                    Tgl_Lahir: document.querySelector('#formPPDBUtama #ppdbTglLahir').value,
+                    NISN: document.querySelector('#formPPDBUtama #ppdbNISN').value,
+                    NIK: document.querySelector('#formPPDBUtama #ppdbNIK').value,
+                    Provinsi_Asal: document.querySelector('#formPPDBUtama #ppdbProvinsi').value,
+                    KabKota_Asal: document.querySelector('#formPPDBUtama #ppdbKabKota').value,
+                    Kecamatan_Asal: document.querySelector('#formPPDBUtama #ppdbKecamatan').value,
+                    Sekolah_Asal: document.querySelector('#formPPDBUtama #ppdbSekolahAsal').value,
+                    Tahun_Lulus: document.querySelector('#formPPDBUtama #ppdbTahunLulus').value,
+                    PAUD_Formal: document.querySelector('#formPPDBUtama #ppdbPaudFormal').value,
+                    PAUD_Non_Formal: document.querySelector('#formPPDBUtama #ppdbPaudNonFormal').value,
                     Dok_Akta: fAkta,
                     Dok_KK: fKK
                 };
