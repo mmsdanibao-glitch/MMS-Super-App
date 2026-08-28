@@ -1308,22 +1308,31 @@
                     dapatkanB64('fileAkta'), dapatkanB64('fileKK')
                 ]);
 
-                // Mapping presisi menembak langsung ke form yang aktif
+                // ==========================================
+                // FUNGSI PENYEDOT DATA ANTI-CRASH
+                // ==========================================
+                const getVal = (id) => {
+                    const els = document.querySelectorAll('#' + id);
+                    // Jika ada ID ganda, ambil yang posisinya terakhir (biasanya form yang aktif)
+                    if (els.length > 0) return els[els.length - 1].value;
+                    return ""; // Jika tidak ditemukan, kembalikan kosong (tidak crash)
+                };
+
                 const payload = {
                     emailOrangTua: dataUserGlobal.user.email,
-                    Jalur_Pendaftaran: document.querySelector('#formPPDBUtama #ppdbJalur').value,
-                    Nama_Calon_Siswa: document.querySelector('#formPPDBUtama #ppdbNamaAnak').value,
-                    Tempat_Lahir: document.querySelector('#formPPDBUtama #ppdbTempatLahir').value,
-                    Tgl_Lahir: document.querySelector('#formPPDBUtama #ppdbTglLahir').value,
-                    NISN: document.querySelector('#formPPDBUtama #ppdbNISN').value,
-                    NIK: document.querySelector('#formPPDBUtama #ppdbNIK').value,
-                    Provinsi_Asal: document.querySelector('#formPPDBUtama #ppdbProvinsi').value,
-                    KabKota_Asal: document.querySelector('#formPPDBUtama #ppdbKabKota').value,
-                    Kecamatan_Asal: document.querySelector('#formPPDBUtama #ppdbKecamatan').value,
-                    Sekolah_Asal: document.querySelector('#formPPDBUtama #ppdbSekolahAsal').value,
-                    Tahun_Lulus: document.querySelector('#formPPDBUtama #ppdbTahunLulus').value,
-                    PAUD_Formal: document.querySelector('#formPPDBUtama #ppdbPaudFormal').value,
-                    PAUD_Non_Formal: document.querySelector('#formPPDBUtama #ppdbPaudNonFormal').value,
+                    Jalur_Pendaftaran: getVal('ppdbJalur') || "Siswa Baru",
+                    Nama_Calon_Siswa: getVal('ppdbNamaAnak'),
+                    Tempat_Lahir: getVal('ppdbTempatLahir'),
+                    Tgl_Lahir: getVal('ppdbTglLahir'),
+                    NISN: getVal('ppdbNISN'),
+                    NIK: getVal('ppdbNIK'),
+                    Provinsi_Asal: getVal('ppdbProvinsi'),
+                    KabKota_Asal: getVal('ppdbKabKota'),
+                    Kecamatan_Asal: getVal('ppdbKecamatan'),
+                    Sekolah_Asal: getVal('ppdbSekolahAsal'),
+                    Tahun_Lulus: getVal('ppdbTahunLulus'),
+                    PAUD_Formal: getVal('ppdbPaudFormal'),
+                    PAUD_Non_Formal: getVal('ppdbPaudNonFormal'),
                     Dok_Akta: fAkta,
                     Dok_KK: fKK
                 };
