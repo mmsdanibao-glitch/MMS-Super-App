@@ -560,7 +560,7 @@
     let dataLaporanGlobal = null;
     
     // MASUKKAN API URL DISINI YA MAS BRO!
-    const API_URL = "https://script.google.com/macros/s/AKfycbzCdP1975YRjSQCeJyQYNAH11E5pMQuuMaZk5X4uJ6V_S4UQ0boPztBUBE35qAER4lf7g/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbzb0m4OHXeizqtJixR6GWeAT_PgqTxA3joxwKUlUkxAVhIkOHj8ktKpTHu0vGdAZ_FtXw/exec";
 
     const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
     const SwalMin = Swal.mixin({ customClass: { popup: 'minimalis-popup shadow-lg', title: 'minimalis-title text-dark fw-bold', htmlContainer: 'minimalis-text text-muted', confirmButton: 'btn btn-danger btn-sm mx-1 px-4 rounded-3 fw-bold', cancelButton: 'btn btn-light btn-sm mx-1 px-4 border rounded-3 fw-bold' }, buttonsStyling: false });
@@ -1319,8 +1319,11 @@
                 };
 
                 const payload = {
+                    tenantDbId: dataUserGlobal.tenant.idDatabase, // INJEKSI MUTLAK: Arahkan ke DB Induk
+                    idDbFinance: dataUserGlobal.tenant.idDbFinance,
                     emailOrangTua: dataUserGlobal.user.email,
                     Jalur_Pendaftaran: getVal('ppdbJalur') || "Siswa Baru",
+                    // ... (lanjutkan variabel lainnya persis seperti sebelumnya)
                     Nama_Calon_Siswa: getVal('ppdbNamaAnak'),
                     Tempat_Lahir: getVal('ppdbTempatLahir'),
                     Tgl_Lahir: getVal('ppdbTglLahir'),
