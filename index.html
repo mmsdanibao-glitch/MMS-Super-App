@@ -1464,7 +1464,6 @@
         return null;
     }
 
-
     // ========================================================
     // ENGINE DINAMIS FORM & TRACKER 3-IN-1
     // ========================================================
@@ -1474,15 +1473,28 @@
         const tracker = document.getElementById('stepperPPDBUI');
         const wadahTrack = document.getElementById('wadahTrackerPPDB');
         
-        // Reset Visibilitas
-        ['blokIdentitasUmum', 'blokPAUD', 'blokMutasiMasuk', 'blokMutasiKeluar', 'blokDokumenSemua', 'dokumenDasarArea', 'dokumenMutasiMasukArea', 'dokumenMutasiKeluarArea'].forEach(id => document.getElementById(id).style.display = 'none');
-        btn.style.display = 'none'; wadahTrack.style.display = 'none';
+        // 1. Sembunyikan Semua Blok Terlebih Dahulu (Reset Total)
+        const semuaBlok = [
+            'areaPilihAnakLayanan', 'blokIdentitasUmum', 'blokPAUD', 
+            'blokMutasiMasuk', 'blokMutasiKeluar', 'blokDokumenSemua', 
+            'dokumenDasarArea', 'dokumenMutasiMasukArea', 'dokumenMutasiKeluarArea'
+        ];
+        semuaBlok.forEach(id => {
+            let el = document.getElementById(id);
+            if(el) el.style.display = 'none';
+        });
+        
+        btn.style.display = 'none'; 
+        wadahTrack.style.display = 'none';
 
         if(jalur === "") return;
 
-        btn.style.display = 'block'; wadahTrack.style.display = 'block';
+        // 2. Munculkan Elemen Utama
+        btn.style.display = 'block'; 
+        wadahTrack.style.display = 'block';
         document.getElementById('blokDokumenSemua').style.display = 'block';
 
+        // 3. Buka Blok Sesuai Jalur
         if(jalur === "Siswa Baru") {
             document.getElementById('blokIdentitasUmum').style.display = 'block';
             document.getElementById('blokPAUD').style.display = 'block';
@@ -1494,7 +1506,9 @@
                 <div class="stepper-item"><div class="stepper-icon"><i class="bi bi-gear-fill"></i></div><div class="stepper-text">Proses<br>Panitia</div></div>
                 <div class="stepper-item"><div class="stepper-icon"><i class="bi bi-qr-code"></i></div><div class="stepper-text">Diterima<br>(QR)</div></div>
             `;
-        } else if (jalur === "Mutasi Masuk") {
+        } 
+        else if (jalur === "Mutasi Masuk") {
+            document.getElementById('areaPilihAnakLayanan').style.display = 'block'; // Munculkan Draft Anak
             document.getElementById('blokIdentitasUmum').style.display = 'block';
             document.getElementById('blokMutasiMasuk').style.display = 'block';
             document.getElementById('dokumenDasarArea').style.display = 'flex';
@@ -1505,17 +1519,18 @@
                 <div class="stepper-item"><div class="stepper-icon"><i class="bi bi-wallet2"></i></div><div class="stepper-text">Bayar<br>Tagihan</div></div>
                 <div class="stepper-item"><div class="stepper-icon"><i class="bi bi-qr-code"></i></div><div class="stepper-text">Diterima<br>(QR)</div></div>
             `;
-        } else if (jalur === "Mutasi Keluar") {
+            fetchAnakAktifMutasi();
+        } 
+        else if (jalur === "Mutasi Keluar") {
+            document.getElementById('areaPilihAnakLayanan').style.display = 'block'; // Munculkan Pilih Anak Aktif
             document.getElementById('blokMutasiKeluar').style.display = 'block';
             document.getElementById('dokumenMutasiKeluarArea').style.display = 'flex';
-            document.getElementById('areaPilihAnakLayanan').style.display = 'block'; // Ortu Wajib Pilih Anak dari Database
             tracker.innerHTML = `
                 <div class="stepper-item active"><div class="stepper-icon"><i class="bi bi-ui-checks"></i></div><div class="stepper-text">Isi<br>Form</div></div>
                 <div class="stepper-item"><div class="stepper-icon"><i class="bi bi-cash"></i></div><div class="stepper-text">Validasi<br>Bendahara</div></div>
                 <div class="stepper-item"><div class="stepper-icon"><i class="bi bi-person-badge"></i></div><div class="stepper-text">Proses<br>Kepsek</div></div>
                 <div class="stepper-item"><div class="stepper-icon"><i class="bi bi-envelope-paper"></i></div><div class="stepper-text">Surat<br>Mutasi</div></div>
             `;
-            // Trigger tarik data anak aktif
             fetchAnakAktifMutasi();
         }
     }
@@ -1526,7 +1541,7 @@
         fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_siswa_ortu', tenantDbId: dataUserGlobal.tenant.idDatabase, email: dataUserGlobal.user.email }) })
         .then(r=>r.json()).then(res=>{
             dataOpsiLayanan = res.data;
-            let opt = '<option value="">-- Pilih Anak yang Akan Pindah --</option>';
+            let opt = '<option value="">-- Pilih Anak / Lanjutkan Draft --</option>';
             dataOpsiLayanan.forEach((a,i) => { opt += `<option value="${i}">${a.nama} (NISN: ${a.nisn})</option>`; });
             document.getElementById('selSiswaLayanan').innerHTML = opt;
         });
@@ -1534,11 +1549,18 @@
 
     function tarikDataDraftSiswa() {
         let idx = document.getElementById('selSiswaLayanan').value;
-        if(idx === "") return;
-        document.getElementById('ppdbNamaAnak').value = dataOpsiLayanan[idx].nama;
-        document.getElementById('ppdbNISN').value = dataOpsiLayanan[idx].nisn;
-        // Sistem bisa dikembangkan lebih lanjut untuk menyedot field lain yang relevan.
+        if(idx === "") {
+            document.getElementById('formPPDBUtama').reset();
+            return;
+        }
+        // Pastikan input form tetap ada meskipun disembunyikan
+        let elNama = document.getElementById('ppdbNamaAnak');
+        let elNISN = document.getElementById('ppdbNISN');
+        if(elNama) elNama.value = dataOpsiLayanan[idx].nama;
+        if(elNISN) elNISN.value = dataOpsiLayanan[idx].nisn;
     }
+
+    
     // ==== KIRIM FORMULIR PPDB LENGKAP ====
     document.addEventListener('submit', async function(e) {
         if(e.target && e.target.id === 'formPPDBUtama') {
