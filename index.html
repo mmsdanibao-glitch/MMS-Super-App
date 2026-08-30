@@ -350,28 +350,6 @@
            <h6 class="fw-bold mb-1 text-dark" id="judulPPDBDinamic"><i class="bi bi-ui-radios-grid text-danger me-2"></i>Pusat Layanan Siswa</h6>
            <p class="small mb-0 text-muted" id="subjudulPPDBDinamic">Pilih jalur pendaftaran atau mutasi untuk memulai.</p>
            
-           <div id="wadahTrackerPPDB" class="mt-4 pt-3 border-top" style="display: none;">
-               <div class="d-flex justify-content-between align-items-center mb-2">
-                   <small class="fw-bold text-muted">Status: <span id="trackNamaSiswa" class="text-dark">Siswa</span></small>
-                   <span class="badge bg-danger rounded-pill" id="trackStatusTeks">Proses</span>
-               </div>
-               <div class="stepper-wrapper" id="stepperPPDBUI"></div>
-               <div id="trackQRArea" class="text-center mt-4 bg-light p-3 rounded-4 border border-success" style="display: none;">
-                   <h6 class="fw-bold text-success mb-2"><i class="bi bi-check-circle-fill me-1"></i> Selesai!</h6>
-                   <p class="small text-muted mb-2" id="teksAkhirTracker">Tunjukkan QR ini saat hari pertama masuk.</p>
-                   <img id="imgQRSiswa" src="" width="120" height="120" class="rounded-3 shadow-sm bg-white p-2">
-               </div>
-           </div>
-       </div>
-
-       <!-- AREA PPDB & MUTASI ORANG TUA (3-IN-1 DINAMIS) -->
-    <div id="areaPPDBOrtu" style="display: none; padding: 20px;">
-       
-       <!-- HEADER & TRACKER -->
-       <div class="alert alert-light border-0 shadow-sm rounded-4 p-4 mb-4" id="headerPPDBDinamic" style="border-left: 6px solid var(--warna-tema) !important;">
-           <h6 class="fw-bold mb-1 text-dark" id="judulPPDBDinamic"><i class="bi bi-ui-radios-grid text-danger me-2"></i>Pusat Layanan Siswa</h6>
-           <p class="small mb-0 text-muted" id="subjudulPPDBDinamic">Pilih jalur pendaftaran atau mutasi untuk memulai.</p>
-           
            <!-- WADAH TRACKING DINAMIS -->
            <div id="wadahTrackerPPDB" class="mt-4 pt-3 border-top" style="display: none;">
                <div class="d-flex justify-content-between align-items-center mb-2">
@@ -401,6 +379,7 @@
                </select>
             </div>
 
+            <!-- AREA DRAFT / PILIH ANAK -->
             <div id="areaPilihAnakLayanan" class="mb-4" style="display:none;">
                <div class="alert alert-warning border-0 p-3 rounded-4 mb-0">
                   <label class="form-label fw-bold text-dark small mb-1"><i class="bi bi-person-lines-fill me-1"></i> Lanjutkan Draft / Pilih Anak</label>
@@ -408,6 +387,7 @@
                </div>
             </div>
 
+            <!-- BLOK IDENTITAS UMUM (Siswa Baru & Mutasi Masuk) -->
             <div id="blokIdentitasUmum" style="display:none;">
                 <h6 class="fw-bold text-dark mb-3">Identitas Calon Siswa</h6>
                 <div class="mb-3"><input type="text" class="form-control bg-light border-0 py-2" id="ppdbNamaAnak" placeholder="Nama Lengkap Siswa"></div>
@@ -432,6 +412,7 @@
                 </div>
             </div>
 
+            <!-- BLOK KHUSUS SISWA BARU -->
             <div id="blokPAUD" style="display:none;">
                 <h6 class="fw-bold text-dark mb-3 mt-4">Riwayat PAUD</h6>
                 <div class="row g-2 mb-3">
@@ -440,17 +421,20 @@
                 </div>
             </div>
 
+            <!-- BLOK KHUSUS MUTASI MASUK -->
             <div id="blokMutasiMasuk" style="display:none;">
                 <h6 class="fw-bold text-dark mb-3 mt-4">Target Penempatan</h6>
                 <div class="mb-3"><input type="text" class="form-control bg-light border-0 py-2 border-primary" id="ppdbKelasTujuan" placeholder="Cth: Kelas 4 SD"></div>
             </div>
 
+            <!-- BLOK KHUSUS MUTASI KELUAR -->
             <div id="blokMutasiKeluar" style="display:none;">
                 <h6 class="fw-bold text-dark mb-3 mt-4">Detail Perpindahan</h6>
                 <div class="mb-3"><label class="small fw-bold text-muted">Tanggal Rencana Pindah</label><input type="date" class="form-control bg-light border-0 py-2" id="mutasiTglKeluar"></div>
                 <div class="mb-3"><textarea class="form-control bg-light border-0 py-2" id="mutasiAlasan" rows="3" placeholder="Alasan Kepindahan (Wajib)"></textarea></div>
             </div>
 
+            <!-- BLOK UNGGAH DOKUMEN -->
             <div id="blokDokumenSemua" style="display:none;">
                 <h6 class="fw-bold text-dark mb-3 mt-4">Dokumen Persyaratan (Maks 2MB)</h6>
                 <div class="row g-2 mb-3" id="dokumenDasarArea">
@@ -474,7 +458,6 @@
                 <div class="alert alert-success border-0 shadow-sm rounded-4 p-4 text-center">
                    <h5 class="fw-bold text-success mb-2"><i class="bi bi-check-circle-fill me-2"></i>Data Berhasil Dikirim!</h5>
                    <p class="small text-muted mb-4" id="teksInstruksiLanjut">Langkah selanjutnya adalah menyelesaikan pembayaran Uang Pendaftaran.</p>
-                   
                    <div id="kotakNominalInstan" class="bg-white p-4 rounded-4 shadow-sm border border-success text-center">
                        <h6 class="fw-bold text-muted mb-1">Total Tagihan (Auto-Billing)</h6>
                        <h2 class="fw-bold text-danger mb-3" id="teksNominalInstan">Rp 0</h2>
@@ -482,8 +465,7 @@
                            <i class="bi bi-wallet2 me-2"></i>Buka Menu Pembayaran
                        </button>
                    </div>
-                   
-                   <button type="button" class="btn btn-light border w-100 fw-bold rounded-pill mt-3 py-2" onclick="renderFormDinamis()">
+                   <button type="button" class="btn btn-light border w-100 fw-bold rounded-pill mt-3 py-2" onclick="document.getElementById('formPPDBUtama').reset(); document.getElementById('areaTagihanInstan').style.display='none'; renderFormDinamis();">
                        <i class="bi bi-arrow-repeat me-2"></i>Daftarkan Anak Lain
                    </button>
                 </div>
@@ -1379,6 +1361,10 @@
         const tracker = document.getElementById('stepperPPDBUI');
         const wadahTrack = document.getElementById('wadahTrackerPPDB');
         
+        // Sembunyikan Area Tagihan Instan jika ada sisa
+        let areaInstan = document.getElementById('areaTagihanInstan');
+        if(areaInstan) areaInstan.style.display = 'none';
+        
         // 1. Sembunyikan Semua Blok Terlebih Dahulu (Reset Total)
         const semuaBlok = [
             'areaPilihAnakLayanan', 'blokIdentitasUmum', 'blokPAUD', 
@@ -1394,14 +1380,6 @@
         wadahTrack.style.display = 'none';
 
         if(jalur === "") return;
-
-        // 2. Munculkan Elemen Utama
-        btn.style.display = 'block'; 
-        wadahTrack.style.display = 'block';
-        document.getElementById('blokDokumenSemua').style.display = 'block';
-
-        // 3. Buka Blok Sesuai Jalur
-        if(jalur === "Siswa Baru") {
             document.getElementById('blokIdentitasUmum').style.display = 'block';
             document.getElementById('blokPAUD').style.display = 'block';
             document.getElementById('dokumenDasarArea').style.display = 'flex';
