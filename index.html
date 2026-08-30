@@ -1580,7 +1580,10 @@
                     dapatkanB64('fileRapor'), dapatkanB64('fileSuratOrtu'), dapatkanB64('fileSuratTujuan')
                 ]);
 
-                const getVal = (id) => { const el = document.getElementById(id); return el ? el.value : ""; };
+                const getVal = (id) => { 
+    const el = document.querySelector('#formPPDBUtama #' + id); 
+    return el ? el.value : ""; 
+};
 
                 const payload = {
                     tenantDbId: dataUserGlobal.tenant.idDatabase,
