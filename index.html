@@ -1548,11 +1548,6 @@
             btn.disabled = true;
 
             try {
-                // Konversi Akta dan KK
-                const [fAkta, fKK] = await Promise.all([
-                    dapatkanB64('fileAkta'), dapatkanB64('fileKK')
-                ]);
-
                 // Tarik Semua Dokumen (Otomatis Abaikan yang Tidak Relevan/Kosong)
                 const [fAkta, fKK, fDapodik, fRapor, fOrtu, fSekolahTujuan] = await Promise.all([
                     dapatkanB64('fileAkta'), dapatkanB64('fileKK'), dapatkanB64('fileDapodik'), 
@@ -1586,49 +1581,29 @@
                     Dok_SuratOrtu: fOrtu, Dok_SuratTujuan: fSekolahTujuan
                 };
 
-                const payload = {
-                    tenantDbId: dataUserGlobal.tenant.idDatabase, // INJEKSI MUTLAK: Arahkan ke DB Induk
-                    idDbFinance: dataUserGlobal.tenant.idDbFinance,
-                    emailOrangTua: dataUserGlobal.user.email,
-                    Jalur_Pendaftaran: getVal('ppdbJalur') || "Siswa Baru",
-                    // ... (lanjutkan variabel lainnya persis seperti sebelumnya)
-                    Nama_Calon_Siswa: getVal('ppdbNamaAnak'),
-                    Tempat_Lahir: getVal('ppdbTempatLahir'),
-                    Tgl_Lahir: getVal('ppdbTglLahir'),
-                    NISN: getVal('ppdbNISN'),
-                    NIK: getVal('ppdbNIK'),
-                    Provinsi_Asal: getVal('ppdbProvinsi'),
-                    KabKota_Asal: getVal('ppdbKabKota'),
-                    Kecamatan_Asal: getVal('ppdbKecamatan'),
-                    Sekolah_Asal: getVal('ppdbSekolahAsal'),
-                    Tahun_Lulus: getVal('ppdbTahunLulus'),
-                    PAUD_Formal: getVal('ppdbPaudFormal'),
-                    PAUD_Non_Formal: getVal('ppdbPaudNonFormal'),
-                    Dok_Akta: fAkta,
-                    Dok_KK: fKK
-                };
-
                 const res = await fetch(API_URL, {
                     method: "POST",
                     body: JSON.stringify({ action: 'submit_ppdb', data: payload, idFolder: dataUserGlobal.tenant.idFolderFinance })
                 }).then(r => r.json());
 
-                btn.innerHTML = '<i class="bi bi-send-fill me-2"></i>Kirim Pendaftaran';
+                btn.innerHTML = '<i class="bi bi-send-fill me-2"></i>Kirim Data';
                 btn.disabled = false;
 
                 if(res.status === 'success') {
                     SwalMin.fire({ title: 'Berhasil!', text: res.pesan, icon: 'success' });
                     document.getElementById('formPPDBUtama').reset();
                     // Reset UI Ikon
-                    ['Akta', 'KK'].forEach(jenis => {
-                       document.getElementById('ikon' + jenis).className = "bi bi-file-text fs-3 text-secondary";
-                       document.getElementById('teks' + jenis).innerText = jenis === 'Akta' ? "Dok Akta" : "Dok KK";
+                    ['Akta', 'KK', 'Dapodik', 'Rapor', 'SuratOrtu', 'SuratTujuan'].forEach(jenis => {
+                       let elIkon = document.getElementById('ikon' + jenis);
+                       if(elIkon) elIkon.className = "bi bi-file-text fs-3 text-secondary";
+                       let elTeks = document.getElementById('teks' + jenis);
+                       if(elTeks) elTeks.className = "small fw-bold mt-2 mb-0 text-muted";
                     });
                 } else {
                     SwalMin.fire({ title: 'Gagal', text: res.pesan, icon: 'error' });
                 }
             } catch(err) {
-                btn.innerHTML = '<i class="bi bi-send-fill me-2"></i>Kirim Pendaftaran';
+                btn.innerHTML = '<i class="bi bi-send-fill me-2"></i>Kirim Data';
                 btn.disabled = false;
                 SwalMin.fire('Error Server', err.message, 'error');
             }
