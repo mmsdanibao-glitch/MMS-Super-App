@@ -732,7 +732,7 @@
     let dataLaporanGlobal = null;
     
     // MASUKKAN API URL DISINI YA MAS BRO!
-    const API_URL = "https://script.google.com/macros/s/AKfycbyDtLeHCtrhteYPBWQhOVK5q3s8gw4vm6cLn6Q6N-83tCR7NoEKOQ7ps-b--xry_n8Xcw/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbzAF-WKzwv7wURq0vZ2BS1keRIl2oSyi62RUuMovfzx2sGxzosDsFutaFa7H9EchqJ6zw/exec";
 
     const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
     const SwalMin = Swal.mixin({ customClass: { popup: 'minimalis-popup shadow-lg', title: 'minimalis-title text-dark fw-bold', htmlContainer: 'minimalis-text text-muted', confirmButton: 'btn btn-danger btn-sm mx-1 px-4 rounded-3 fw-bold', cancelButton: 'btn btn-light btn-sm mx-1 px-4 border rounded-3 fw-bold' }, buttonsStyling: false });
@@ -788,11 +788,12 @@
         } else if (role.includes('guru') || role.includes('wali kelas') || role.includes('teacher')) {
             htmlMenu += `<div class="menu-card" onclick='bukaModul("ruang_guru")'><div class="menu-icon-wrap"><i class="bi bi-journal-bookmark-fill text-primary"></i></div><p class="menu-title fw-bold text-dark">Jurnal & Kelas</p></div>`;
             htmlMenu += `<div class="menu-card" onclick='bukaModul("absensi_qr")'><div class="menu-icon-wrap"><i class="bi bi-qr-code-scan text-success"></i></div><p class="menu-title fw-bold text-dark">Scan Kehadiran</p></div>`;
-        } // Pintu Khusus untuk Orang Tua
+        } 
+          // Pintu Khusus untuk Orang Tua
         else {
             htmlMenu += `<div class="menu-card" onclick='bukaModul("keuangan_ortu")'><div class="menu-icon-wrap"><i class="bi bi-wallet2"></i></div><p class="menu-title fw-bold text-dark">Tagihan & Bayar</p></div>`;
-            // Label Diubah Menjadi PPDB
-            htmlMenu += `<div class="menu-card" onclick='bukaModul("ppdb_ortu")'><div class="menu-icon-wrap"><i class="bi bi-person-plus-fill"></i></div><p class="menu-title fw-bold text-dark">PPDB</p></div>`;
+            // LABEL TELAH DIUBAH MENJADI PPDB & Mutasi
+            htmlMenu += `<div class="menu-card" onclick='bukaModul("ppdb_ortu")'><div class="menu-icon-wrap"><i class="bi bi-person-plus-fill"></i></div><p class="menu-title fw-bold text-dark">PPDB & Mutasi</p></div>`;
             htmlMenu += `<div class="menu-card" onclick='bukaModul("mutasi_ortu")'><div class="menu-icon-wrap"><i class="bi bi-arrow-left-right"></i></div><p class="menu-title fw-bold text-dark">Mutasi Siswa</p></div>`;
         }
         
