@@ -1447,7 +1447,7 @@
             btn.disabled = true;
 
             try {
-                // Tarik Semua Dokumen (Otomatis Abaikan yang Tidak Relevan/Kosong)
+                // Tarik Semua Dokumen
                 const [fAkta, fKK, fDapodik, fRapor, fOrtu, fSekolahTujuan] = await Promise.all([
                     dapatkanB64('fileAkta'), dapatkanB64('fileKK'), dapatkanB64('fileDapodik'), 
                     dapatkanB64('fileRapor'), dapatkanB64('fileSuratOrtu'), dapatkanB64('fileSuratTujuan')
@@ -1494,14 +1494,14 @@
                 if(res.status === 'success') {
                     SwalMin.fire({ title: 'Berhasil!', text: 'Data terekam di sistem.', icon: 'success' });
                     
-                    // 1. Sembunyikan Formulir yang sudah diisi
+                    // 1. Sembunyikan Formulir
                     ['areaPilihAnakLayanan', 'blokIdentitasUmum', 'blokPAUD', 'blokMutasiMasuk', 'blokMutasiKeluar', 'blokDokumenSemua'].forEach(id => {
                         let el = document.getElementById(id);
                         if(el) el.style.display = 'none';
                     });
                     btn.style.display = 'none';
                     
-                    // 2. Mainkan Animasi Tracker & Tampilkan Info Lanjutan
+                    // 2. Tampilkan Info Lanjutan & Animasi Tracker
                     document.getElementById('areaTagihanInstan').style.display = 'block';
                     const jalur = getVal('ppdbJalur');
 
