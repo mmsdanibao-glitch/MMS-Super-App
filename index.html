@@ -1352,9 +1352,6 @@
         return null;
     }
 
-    // ========================================================
-    // ENGINE DINAMIS FORM & TRACKER 3-IN-1
-    // ========================================================
     function renderFormDinamis() {
         const jalur = document.getElementById('ppdbJalur').value;
         const btn = document.getElementById('btnSubmitPPDB');
@@ -1380,6 +1377,14 @@
         wadahTrack.style.display = 'none';
 
         if(jalur === "") return;
+
+        // 2. Munculkan Elemen Utama
+        btn.style.display = 'block'; 
+        wadahTrack.style.display = 'block';
+        document.getElementById('blokDokumenSemua').style.display = 'block';
+
+        // 3. Buka Blok Sesuai Jalur
+        if(jalur === "Siswa Baru") {
             document.getElementById('blokIdentitasUmum').style.display = 'block';
             document.getElementById('blokPAUD').style.display = 'block';
             document.getElementById('dokumenDasarArea').style.display = 'flex';
@@ -1392,7 +1397,7 @@
             `;
         } 
         else if (jalur === "Mutasi Masuk") {
-            document.getElementById('areaPilihAnakLayanan').style.display = 'block'; // Munculkan Draft Anak
+            document.getElementById('areaPilihAnakLayanan').style.display = 'block'; 
             document.getElementById('blokIdentitasUmum').style.display = 'block';
             document.getElementById('blokMutasiMasuk').style.display = 'block';
             document.getElementById('dokumenDasarArea').style.display = 'flex';
@@ -1406,7 +1411,7 @@
             fetchAnakAktifMutasi();
         } 
         else if (jalur === "Mutasi Keluar") {
-            document.getElementById('areaPilihAnakLayanan').style.display = 'block'; // Munculkan Pilih Anak Aktif
+            document.getElementById('areaPilihAnakLayanan').style.display = 'block'; 
             document.getElementById('blokMutasiKeluar').style.display = 'block';
             document.getElementById('dokumenMutasiKeluarArea').style.display = 'flex';
             tracker.innerHTML = `
@@ -1417,18 +1422,6 @@
             `;
             fetchAnakAktifMutasi();
         }
-    }
-
-    let dataOpsiLayanan = [];
-    function fetchAnakAktifMutasi() {
-        document.getElementById('selSiswaLayanan').innerHTML = '<option>Memuat data anak...</option>';
-        fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_siswa_ortu', tenantDbId: dataUserGlobal.tenant.idDatabase, email: dataUserGlobal.user.email }) })
-        .then(r=>r.json()).then(res=>{
-            dataOpsiLayanan = res.data;
-            let opt = '<option value="">-- Pilih Anak / Lanjutkan Draft --</option>';
-            dataOpsiLayanan.forEach((a,i) => { opt += `<option value="${i}">${a.nama} (NISN: ${a.nisn})</option>`; });
-            document.getElementById('selSiswaLayanan').innerHTML = opt;
-        });
     }
 
     function tarikDataDraftSiswa() {
