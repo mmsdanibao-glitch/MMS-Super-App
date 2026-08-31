@@ -368,6 +368,19 @@
        <!-- FORMULIR 3-IN-1 -->
        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
          <form id="formPPDBUtama">
+           <!-- INPUT TERSEMBUNYI UNTUK MODE EDIT -->
+            <input type="hidden" id="ppdbIdEditMode" value="">
+
+            <!-- DASHBOARD MINI RIWAYAT ANAK -->
+            <div id="dashboardRiwayatAnak" class="mb-4" style="display: none;">
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                    <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-person-lines-fill text-danger me-2"></i>Data Anak Anda</h6>
+                    <button type="button" class="btn btn-sm btn-danger fw-bold rounded-pill shadow-sm px-3" onclick="bukaFormKosongPPDB()"><i class="bi bi-plus-lg me-1"></i> Daftar Anak Lain</button>
+                </div>
+                <div id="listKartuAnakOrtu">
+                    <div class="text-center p-3"><div class="spinner-border text-danger spinner-border-sm"></div></div>
+                </div>
+            </div>
             
             <div class="mb-4">
                <label class="form-label fw-bold text-dark small">Pilih Layanan / Jalur</label>
@@ -709,7 +722,7 @@
         else if(modulId === 'verifikasi') { document.getElementById('judulModul').innerText="Verifikasi PPDB"; document.getElementById('areaMejaVerifikasi').style.display='block'; }
         
         // JALUR BARU UNTUK ORTU & GURU
-        else if(modulId === 'ppdb_ortu') { document.getElementById('judulModul').innerText="Murid Baru (PPDB)"; document.getElementById('areaPPDBOrtu').style.display='block'; }
+        else if(modulId === 'ppdb_ortu') { document.getElementById('judulModul').innerText="PPDB & Mutasi"; document.getElementById('areaPPDBOrtu').style.display='block'; loadDashboardPPDB(); }
         else if(modulId === 'mutasi_ortu') { document.getElementById('judulModul').innerText="Mutasi Siswa"; document.getElementById('areaMutasiOrtu').style.display='block'; }
         else if(modulId === 'ruang_guru' || modulId === 'absensi_qr') { document.getElementById('judulModul').innerText="Ruang Guru"; document.getElementById('areaRuangGuru').style.display='block'; }
     }
@@ -1437,6 +1450,96 @@
         if(elNISN) elNISN.value = dataOpsiLayanan[idx].nisn;
     }
 
+    // ==== ENGINE DASHBOARD MINI & MODE EDIT ====
+    let dataRiwayatPPDBGlobal = [];
+
+    // Trigger saat Ortu buka menu PPDB
+    function loadDashboardPPDB() {
+        document.getElementById('dashboardRiwayatAnak').style.display = 'block';
+        document.getElementById('formPPDBUtama').reset();
+        document.getElementById('ppdbIdEditMode').value = ""; // Pastikan mode edit mati
+        
+        // Sembunyikan isian form fisik dulu
+        document.getElementById('ppdbJalur').parentElement.style.display = 'none';
+        ['blokIdentitasUmum', 'blokPAUD', 'blokMutasiMasuk', 'blokMutasiKeluar', 'blokDokumenSemua', 'btnSubmitPPDB', 'wadahTrackerPPDB'].forEach(id => {
+            let el = document.getElementById(id); if(el) el.style.display = 'none';
+        });
+
+        fetch(API_URL, { method: "POST", body: JSON.stringify({ action: 'get_status_ppdb', tenantDbId: dataUserGlobal.tenant.idDatabase, email: dataUserGlobal.user.email }) })
+        .then(r=>r.json()).then(res=>{
+            let wadah = document.getElementById('listKartuAnakOrtu');
+            if(res.status==='success') {
+                dataRiwayatPPDBGlobal = res.data;
+                if(dataRiwayatPPDBGlobal.length === 0) {
+                    // Jika belum punya anak terdaftar, langsung buka form kosong
+                    bukaFormKosongPPDB();
+                } else {
+                    let html = "";
+                    dataRiwayatPPDBGlobal.forEach(a => {
+                        let btnEdit = a.statusVerifikasi.toLowerCase().includes('verifikasi') || a.statusVerifikasi.toLowerCase().includes('panitia') 
+                            ? `<button type="button" class="btn btn-sm btn-outline-danger fw-bold rounded-pill" onclick="masukModeEdit('${a.idDaftar}')"><i class="bi bi-pencil-square me-1"></i> Edit Data</button>` 
+                            : `<span class="badge bg-success">Terkunci (Sudah ACC)</span>`;
+                            
+                        html += `<div class="bg-light p-3 rounded-4 shadow-sm border mb-3"><div class="d-flex justify-content-between align-items-start"><div><h6 class="fw-bold text-dark mb-1">${a.namaSiswa}</h6><small class="text-muted"><span class="badge bg-danger me-1">${a.jalurPendaftaran}</span> NISN: ${a.nisn}</small></div>${btnEdit}</div></div>`;
+                    });
+                    wadah.innerHTML = html;
+                }
+            }
+        });
+    }
+
+    function bukaFormKosongPPDB() {
+        document.getElementById('dashboardRiwayatAnak').style.display = 'none';
+        document.getElementById('ppdbIdEditMode').value = ""; // Matikan mode edit
+        document.getElementById('formPPDBUtama').reset();
+        document.getElementById('ppdbJalur').parentElement.style.display = 'block'; // Munculkan Dropdown Jalur
+        document.getElementById('ppdbJalur').disabled = false; // Buka kunci jalur
+    }
+
+    function masukModeEdit(idDaftar) {
+        let anak = dataRiwayatPPDBGlobal.find(x => x.idDaftar === idDaftar);
+        if(!anak) return;
+
+        document.getElementById('dashboardRiwayatAnak').style.display = 'none';
+        document.getElementById('ppdbIdEditMode').value = idDaftar; // AKTIFKAN MODE EDIT
+        
+        // Kunci jalur agar tidak bisa diubah saat edit
+        document.getElementById('ppdbJalur').parentElement.style.display = 'block';
+        document.getElementById('ppdbJalur').value = anak.jalurPendaftaran;
+        document.getElementById('ppdbJalur').disabled = true;
+
+        // Tampilkan Form Sesuai Jalur
+        renderFormDinamis();
+
+        // Suntikkan data ke dalam form
+        const setVal = (id, val) => { let el = document.querySelector('#formPPDBUtama #' + id); if(el) el.value = val; };
+        setVal('ppdbNamaAnak', anak.namaSiswa);
+        setVal('ppdbTempatLahir', anak.tempatLahir);
+        
+        // Format Tgl Lahir (Ubah dari DD/MM/YYYY ke YYYY-MM-DD untuk input date HTML)
+        if(anak.tglLahir.includes('/')) {
+            let p = anak.tglLahir.split('/'); setVal('ppdbTglLahir', `${p[2]}-${p[1]}-${p[0]}`);
+        } else if(anak.tglLahir.includes('T')) {
+            setVal('ppdbTglLahir', anak.tglLahir.split('T')[0]);
+        } else { setVal('ppdbTglLahir', anak.tglLahir); }
+
+        setVal('ppdbNISN', anak.nisn);
+        setVal('ppdbNIK', anak.nik);
+        setVal('ppdbProvinsi', anak.provinsiAsal);
+        setVal('ppdbKabKota', anak.kabKotaAsal);
+        setVal('ppdbKecamatan', anak.kecamatanAsal);
+        setVal('ppdbSekolahAsal', anak.sekolahAsal);
+        setVal('ppdbTahunLulus', anak.tahunLulus);
+        setVal('ppdbPaudFormal', anak.paudFormal);
+        setVal('ppdbPaudNonFormal', anak.paudNonFormal);
+        setVal('ppdbKelasTujuan', anak.kelasTujuan || "");
+
+        // Sembunyikan Blok Dokumen (Edit data tidak wajib unggah ulang)
+        document.getElementById('blokDokumenSemua').style.display = 'none';
+        
+        // Ubah teks tombol submit
+        document.getElementById('btnSubmitPPDB').innerHTML = '<i class="bi bi-save-fill me-2"></i>Simpan Perubahan';
+    }
     
     // ==== KIRIM FORMULIR PPDB LENGKAP ====
     document.addEventListener('submit', async function(e) {
