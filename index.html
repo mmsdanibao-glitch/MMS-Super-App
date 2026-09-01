@@ -1365,17 +1365,16 @@
         return null;
     }
 
+    // ==== FUNGSI FORMULIR DINAMIS ====
     function renderFormDinamis() {
         const jalur = document.getElementById('ppdbJalur').value;
         const btn = document.getElementById('btnSubmitPPDB');
         const tracker = document.getElementById('stepperPPDBUI');
         const wadahTrack = document.getElementById('wadahTrackerPPDB');
         
-        // Sembunyikan Area Tagihan Instan jika ada sisa
         let areaInstan = document.getElementById('areaTagihanInstan');
         if(areaInstan) areaInstan.style.display = 'none';
         
-        // 1. Sembunyikan Semua Blok Terlebih Dahulu (Reset Total)
         const semuaBlok = [
             'areaPilihAnakLayanan', 'blokIdentitasUmum', 'blokPAUD', 
             'blokMutasiMasuk', 'blokMutasiKeluar', 'blokDokumenSemua', 
@@ -1391,12 +1390,10 @@
 
         if(jalur === "") return;
 
-        // 2. Munculkan Elemen Utama
         btn.style.display = 'block'; 
         wadahTrack.style.display = 'block';
         document.getElementById('blokDokumenSemua').style.display = 'block';
 
-        // 3. Buka Blok Sesuai Jalur
         if(jalur === "Siswa Baru") {
             document.getElementById('blokIdentitasUmum').style.display = 'block';
             document.getElementById('blokPAUD').style.display = 'block';
@@ -1421,7 +1418,6 @@
                 <div class="stepper-item"><div class="stepper-icon"><i class="bi bi-wallet2"></i></div><div class="stepper-text">Bayar<br>Tagihan</div></div>
                 <div class="stepper-item"><div class="stepper-icon"><i class="bi bi-qr-code"></i></div><div class="stepper-text">Diterima<br>(QR)</div></div>
             `;
-            fetchAnakAktifMutasi();
         } 
         else if (jalur === "Mutasi Keluar") {
             document.getElementById('areaPilihAnakLayanan').style.display = 'block'; 
@@ -1433,33 +1429,26 @@
                 <div class="stepper-item"><div class="stepper-icon"><i class="bi bi-person-badge"></i></div><div class="stepper-text">Proses<br>Kepsek</div></div>
                 <div class="stepper-item"><div class="stepper-icon"><i class="bi bi-envelope-paper"></i></div><div class="stepper-text">Surat<br>Mutasi</div></div>
             `;
-            fetchAnakAktifMutasi();
         }
     }
 
     function tarikDataDraftSiswa() {
         let idx = document.getElementById('selSiswaLayanan').value;
-        if(idx === "") {
-            document.getElementById('formPPDBUtama').reset();
-            return;
-        }
-        // Pastikan input form tetap ada meskipun disembunyikan
+        if(idx === "") { document.getElementById('formPPDBUtama').reset(); return; }
         let elNama = document.getElementById('ppdbNamaAnak');
         let elNISN = document.getElementById('ppdbNISN');
-        if(elNama) elNama.value = dataOpsiLayanan[idx].nama;
-        if(elNISN) elNISN.value = dataOpsiLayanan[idx].nisn;
+        if(elNama && dataOpsiLayanan && dataOpsiLayanan[idx]) elNama.value = dataOpsiLayanan[idx].nama;
+        if(elNISN && dataOpsiLayanan && dataOpsiLayanan[idx]) elNISN.value = dataOpsiLayanan[idx].nisn;
     }
 
     // ==== ENGINE DASHBOARD MINI & MODE EDIT ====
     let dataRiwayatPPDBGlobal = [];
 
-    // Trigger saat Ortu buka menu PPDB
     function loadDashboardPPDB() {
         document.getElementById('dashboardRiwayatAnak').style.display = 'block';
         document.getElementById('formPPDBUtama').reset();
-        document.getElementById('ppdbIdEditMode').value = ""; // Pastikan mode edit mati
+        document.getElementById('ppdbIdEditMode').value = ""; 
         
-        // Sembunyikan isian form fisik dulu
         document.getElementById('ppdbJalur').parentElement.style.display = 'none';
         ['blokIdentitasUmum', 'blokPAUD', 'blokMutasiMasuk', 'blokMutasiKeluar', 'blokDokumenSemua', 'btnSubmitPPDB', 'wadahTrackerPPDB'].forEach(id => {
             let el = document.getElementById(id); if(el) el.style.display = 'none';
@@ -1471,7 +1460,7 @@
             if(res.status==='success') {
                 dataRiwayatPPDBGlobal = res.data;
                 if(dataRiwayatPPDBGlobal.length === 0) {
-                    bukaFormKosongPPDB(); // Buka form kosong jika belum ada anak
+                    bukaFormKosongPPDB(); 
                 } else {
                     let html = "";
                     dataRiwayatPPDBGlobal.forEach(a => {
@@ -1479,7 +1468,6 @@
                             ? `<button type="button" class="btn btn-sm btn-outline-danger fw-bold rounded-pill" onclick="masukModeEdit('${a.idDaftar}')"><i class="bi bi-pencil-square me-1"></i> Edit Data</button>` 
                             : `<span class="badge bg-success shadow-sm"><i class="bi bi-lock-fill"></i> Terkunci (ACC)</span>`;
                             
-                        // INJEKSI MINI TRACKER KE DALAM KARTU
                         let trackerMungil = buatMiniTracker(a.jalurPendaftaran, a.statusVerifikasi);
 
                         html += `<div class="bg-white p-4 rounded-4 shadow-sm border mb-4">
@@ -1502,7 +1490,6 @@
         });
     }
 
-    // FUNGSI PINTAR PENGGERAK ANIMASI TRACKER MASING-MASING ANAK
     function buatMiniTracker(jalur, statusAsli) {
         let s = statusAsli.toLowerCase();
         let html = '<div class="stepper-wrapper mt-3" style="transform: scale(0.85); transform-origin: left top; margin-bottom: -15px;">';
@@ -1512,40 +1499,33 @@
             if(s.includes("terima") || s.includes("lulus")) { s2=s3=s4=s5="completed"; }
             else if(s.includes("panitia") || s.includes("proses")) { s2=s3="completed"; s4="active"; }
             else if(s.includes("validasi") || s.includes("cek")) { s2="completed"; s3="active"; }
-            else { s2="active"; } // Default: Menunggu Verifikasi -> Harus bayar tagihan awal
+            else { s2="active"; } 
             
-            html += `
-                <div class="stepper-item ${s1}"><div class="stepper-icon"><i class="bi bi-ui-checks"></i></div><div class="stepper-text">Form</div></div>
+            html += `<div class="stepper-item ${s1}"><div class="stepper-icon"><i class="bi bi-ui-checks"></i></div><div class="stepper-text">Form</div></div>
                 <div class="stepper-item ${s2}"><div class="stepper-icon"><i class="bi bi-wallet2"></i></div><div class="stepper-text">Bayar</div></div>
                 <div class="stepper-item ${s3}"><div class="stepper-icon"><i class="bi bi-search"></i></div><div class="stepper-text">Validasi</div></div>
                 <div class="stepper-item ${s4}"><div class="stepper-icon"><i class="bi bi-gear-fill"></i></div><div class="stepper-text">Proses</div></div>
-                <div class="stepper-item ${s5}"><div class="stepper-icon"><i class="bi bi-qr-code"></i></div><div class="stepper-text">Diterima</div></div>
-            `;
+                <div class="stepper-item ${s5}"><div class="stepper-icon"><i class="bi bi-qr-code"></i></div><div class="stepper-text">Diterima</div></div>`;
         } else if (jalur === "Mutasi Masuk") {
             let s1 = "completed", s2 = "", s3 = "", s4 = "";
             if(s.includes("terima") || s.includes("lulus")) { s2=s3=s4="completed"; }
             else if(s.includes("bayar") || s.includes("tagihan")) { s2="completed"; s3="active"; }
-            else { s2="active"; } // Default: Masuk meja panitia dulu
+            else { s2="active"; } 
             
-            html += `
-                <div class="stepper-item ${s1}"><div class="stepper-icon"><i class="bi bi-ui-checks"></i></div><div class="stepper-text">Form</div></div>
+            html += `<div class="stepper-item ${s1}"><div class="stepper-icon"><i class="bi bi-ui-checks"></i></div><div class="stepper-text">Form</div></div>
                 <div class="stepper-item ${s2}"><div class="stepper-icon"><i class="bi bi-gear-fill"></i></div><div class="stepper-text">Proses</div></div>
                 <div class="stepper-item ${s3}"><div class="stepper-icon"><i class="bi bi-wallet2"></i></div><div class="stepper-text">Bayar</div></div>
-                <div class="stepper-item ${s4}"><div class="stepper-icon"><i class="bi bi-qr-code"></i></div><div class="stepper-text">Diterima</div></div>
-            `;
+                <div class="stepper-item ${s4}"><div class="stepper-icon"><i class="bi bi-qr-code"></i></div><div class="stepper-text">Diterima</div></div>`;
         } else {
-            // Mutasi Keluar
             let s1 = "completed", s2 = "", s3 = "", s4 = "";
             if(s.includes("selesai") || s.includes("surat") || s.includes("terbit")) { s2=s3=s4="completed"; }
             else if(s.includes("kepsek") || s.includes("proses")) { s2="completed"; s3="active"; }
-            else { s2="active"; } // Default: Menunggu Bendahara
+            else { s2="active"; } 
             
-            html += `
-                <div class="stepper-item ${s1}"><div class="stepper-icon"><i class="bi bi-ui-checks"></i></div><div class="stepper-text">Form</div></div>
+            html += `<div class="stepper-item ${s1}"><div class="stepper-icon"><i class="bi bi-ui-checks"></i></div><div class="stepper-text">Form</div></div>
                 <div class="stepper-item ${s2}"><div class="stepper-icon"><i class="bi bi-cash"></i></div><div class="stepper-text">Bendahara</div></div>
                 <div class="stepper-item ${s3}"><div class="stepper-icon"><i class="bi bi-person-badge"></i></div><div class="stepper-text">Kepsek</div></div>
-                <div class="stepper-item ${s4}"><div class="stepper-icon"><i class="bi bi-envelope-paper"></i></div><div class="stepper-text">Surat</div></div>
-            `;
+                <div class="stepper-item ${s4}"><div class="stepper-icon"><i class="bi bi-envelope-paper"></i></div><div class="stepper-text">Surat</div></div>`;
         }
         html += '</div>';
         return html;
@@ -1553,10 +1533,10 @@
 
     function bukaFormKosongPPDB() {
         document.getElementById('dashboardRiwayatAnak').style.display = 'none';
-        document.getElementById('ppdbIdEditMode').value = ""; // Matikan mode edit
+        document.getElementById('ppdbIdEditMode').value = ""; 
         document.getElementById('formPPDBUtama').reset();
-        document.getElementById('ppdbJalur').parentElement.style.display = 'block'; // Munculkan Dropdown Jalur
-        document.getElementById('ppdbJalur').disabled = false; // Buka kunci jalur
+        document.getElementById('ppdbJalur').parentElement.style.display = 'block'; 
+        document.getElementById('ppdbJalur').disabled = false; 
     }
 
     function masukModeEdit(idDaftar) {
@@ -1564,22 +1544,18 @@
         if(!anak) return;
 
         document.getElementById('dashboardRiwayatAnak').style.display = 'none';
-        document.getElementById('ppdbIdEditMode').value = idDaftar; // AKTIFKAN MODE EDIT
+        document.getElementById('ppdbIdEditMode').value = idDaftar; 
         
-        // Kunci jalur agar tidak bisa diubah saat edit
         document.getElementById('ppdbJalur').parentElement.style.display = 'block';
         document.getElementById('ppdbJalur').value = anak.jalurPendaftaran;
         document.getElementById('ppdbJalur').disabled = true;
 
-        // Tampilkan Form Sesuai Jalur
         renderFormDinamis();
 
-        // Suntikkan data ke dalam form
         const setVal = (id, val) => { let el = document.querySelector('#formPPDBUtama #' + id); if(el) el.value = val; };
         setVal('ppdbNamaAnak', anak.namaSiswa);
         setVal('ppdbTempatLahir', anak.tempatLahir);
         
-        // Format Tgl Lahir (Ubah dari DD/MM/YYYY ke YYYY-MM-DD untuk input date HTML)
         if(anak.tglLahir.includes('/')) {
             let p = anak.tglLahir.split('/'); setVal('ppdbTglLahir', `${p[2]}-${p[1]}-${p[0]}`);
         } else if(anak.tglLahir.includes('T')) {
@@ -1597,10 +1573,7 @@
         setVal('ppdbPaudNonFormal', anak.paudNonFormal);
         setVal('ppdbKelasTujuan', anak.kelasTujuan || "");
 
-        // Sembunyikan Blok Dokumen (Edit data tidak wajib unggah ulang)
         document.getElementById('blokDokumenSemua').style.display = 'none';
-        
-        // Ubah teks tombol submit
         document.getElementById('btnSubmitPPDB').innerHTML = '<i class="bi bi-save-fill me-2"></i>Simpan Perubahan';
     }
     
@@ -1613,7 +1586,6 @@
             btn.disabled = true;
 
             try {
-                // Tarik Semua Dokumen
                 const [fAkta, fKK, fDapodik, fRapor, fOrtu, fSekolahTujuan] = await Promise.all([
                     dapatkanB64('fileAkta'), dapatkanB64('fileKK'), dapatkanB64('fileDapodik'), 
                     dapatkanB64('fileRapor'), dapatkanB64('fileSuratOrtu'), dapatkanB64('fileSuratTujuan')
@@ -1624,10 +1596,14 @@
                     return el ? el.value : ""; 
                 };
 
+                let idEdit = document.getElementById('ppdbIdEditMode').value;
+                let targetAction = idEdit !== "" ? 'edit_ppdb' : 'submit_ppdb';
+
                 const payload = {
                     tenantDbId: dataUserGlobal.tenant.idDatabase,
                     idDbFinance: dataUserGlobal.tenant.idDbFinance,
                     emailOrangTua: dataUserGlobal.user.email,
+                    idDaftar: idEdit, 
                     Jalur_Pendaftaran: getVal('ppdbJalur'),
                     Nama_Calon_Siswa: getVal('ppdbNamaAnak'),
                     Tempat_Lahir: getVal('ppdbTempatLahir'),
@@ -1651,7 +1627,7 @@
 
                 const res = await fetch(API_URL, {
                     method: "POST",
-                    body: JSON.stringify({ action: 'submit_ppdb', data: payload, idFolder: dataUserGlobal.tenant.idFolderFinance })
+                    body: JSON.stringify({ action: targetAction, data: payload, idFolder: dataUserGlobal.tenant.idFolderFinance })
                 }).then(r => r.json());
 
                 btn.innerHTML = '<i class="bi bi-send-fill me-2"></i>Kirim Data';
@@ -1660,14 +1636,17 @@
                 if(res.status === 'success') {
                     SwalMin.fire({ title: 'Berhasil!', text: 'Data terekam di sistem.', icon: 'success' });
                     
-                    // 1. Sembunyikan Formulir
+                    if (idEdit !== "") {
+                        loadDashboardPPDB(); 
+                        return; 
+                    }
+                    
                     ['areaPilihAnakLayanan', 'blokIdentitasUmum', 'blokPAUD', 'blokMutasiMasuk', 'blokMutasiKeluar', 'blokDokumenSemua'].forEach(id => {
                         let el = document.getElementById(id);
                         if(el) el.style.display = 'none';
                     });
                     btn.style.display = 'none';
                     
-                    // 2. Tampilkan Info Lanjutan & Animasi Tracker
                     document.getElementById('areaTagihanInstan').style.display = 'block';
                     const jalur = getVal('ppdbJalur');
 
@@ -1690,7 +1669,6 @@
                         document.getElementById('kotakNominalInstan').style.display = 'none';
                     }
 
-                    // Reset Input Fisik
                     document.getElementById('formPPDBUtama').reset();
                     ['Akta', 'KK', 'Dapodik', 'Rapor', 'SuratOrtu', 'SuratTujuan'].forEach(jenis => {
                        let elIkon = document.getElementById('ikon' + jenis);
