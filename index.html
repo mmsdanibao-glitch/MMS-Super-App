@@ -1464,9 +1464,13 @@
                 } else {
                     let html = "";
                     dataRiwayatPPDBGlobal.forEach(a => {
-                        let btnEdit = a.statusVerifikasi.toLowerCase().includes('verifikasi') || a.statusVerifikasi.toLowerCase().includes('panitia') 
-                            ? `<button type="button" class="btn btn-sm btn-outline-danger fw-bold rounded-pill" onclick="masukModeEdit('${a.idDaftar}')"><i class="bi bi-pencil-square me-1"></i> Edit Data</button>` 
-                            : `<span class="badge bg-success shadow-sm"><i class="bi bi-lock-fill"></i> Terkunci (ACC)</span>`;
+                        // SENSOR PINTAR: Kunci form hanya jika statusnya mencapai tahap final atau ditolak
+    let sTeks = a.statusVerifikasi.toLowerCase();
+    let isTerkunci = sTeks.includes('terima') || sTeks.includes('lulus') || sTeks.includes('selesai') || sTeks.includes('surat') || sTeks.includes('acc') || sTeks.includes('tolak');
+    
+    let btnEdit = !isTerkunci 
+        ? `<button type="button" class="btn btn-sm btn-outline-danger fw-bold rounded-pill" onclick="masukModeEdit('${a.idDaftar}')"><i class="bi bi-pencil-square me-1"></i> Edit Data</button>` 
+        : `<span class="badge bg-success shadow-sm"><i class="bi bi-lock-fill"></i> Terkunci (Final)</span>`;
                             
                         let trackerMungil = buatMiniTracker(a.jalurPendaftaran, a.statusVerifikasi);
 
