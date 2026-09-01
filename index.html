@@ -1494,42 +1494,76 @@
         });
     }
 
+    // FUNGSI PINTAR PENGGERAK ANIMASI TRACKER MASING-MASING ANAK
     function buatMiniTracker(jalur, statusAsli) {
         let s = statusAsli.toLowerCase();
         let html = '<div class="stepper-wrapper mt-3" style="transform: scale(0.85); transform-origin: left top; margin-bottom: -15px;">';
         
         if (jalur === "Siswa Baru") {
             let s1 = "completed", s2 = "", s3 = "", s4 = "", s5 = "";
-            if(s.includes("terima") || s.includes("lulus")) { s2=s3=s4=s5="completed"; }
-            else if(s.includes("panitia") || s.includes("proses")) { s2=s3="completed"; s4="active"; }
-            else if(s.includes("validasi") || s.includes("cek")) { s2="completed"; s3="active"; }
-            else { s2="active"; } 
             
-            html += `<div class="stepper-item ${s1}"><div class="stepper-icon"><i class="bi bi-ui-checks"></i></div><div class="stepper-text">Form</div></div>
+            // Sensor Tahapan Berdasarkan Status di Database
+            if(s.includes("terima") || s.includes("lulus") || s.includes("selesai")) { 
+                s2=s3=s4=s5="completed"; 
+            }
+            else if(s.includes("panitia") || s.includes("proses")) { 
+                s2=s3="completed"; s4="active"; 
+            }
+            else if(s.includes("validasi") || s.includes("cek admin")) { 
+                s2="completed"; s3="active"; 
+            }
+            else if(s.includes("menunggu") || s.includes("bayar") || s.includes("upload") || s.includes("transfer")) { 
+                // Jika sudah bayar atau menunggu validasi bendahara/admin, langkah bayar selesai, lanjut ke validasi/proses
+                s2="completed"; s3="active"; 
+            }
+            else { 
+                s2="active"; // Default awal (Belum bayar)
+            } 
+            
+            html += `
+                <div class="stepper-item ${s1}"><div class="stepper-icon"><i class="bi bi-ui-checks"></i></div><div class="stepper-text">Form</div></div>
                 <div class="stepper-item ${s2}"><div class="stepper-icon"><i class="bi bi-wallet2"></i></div><div class="stepper-text">Bayar</div></div>
                 <div class="stepper-item ${s3}"><div class="stepper-icon"><i class="bi bi-search"></i></div><div class="stepper-text">Validasi</div></div>
                 <div class="stepper-item ${s4}"><div class="stepper-icon"><i class="bi bi-gear-fill"></i></div><div class="stepper-text">Proses</div></div>
-                <div class="stepper-item ${s5}"><div class="stepper-icon"><i class="bi bi-qr-code"></i></div><div class="stepper-text">Diterima</div></div>`;
+                <div class="stepper-item ${s5}"><div class="stepper-icon"><i class="bi bi-qr-code"></i></div><div class="stepper-text">Diterima</div></div>
+            `;
         } else if (jalur === "Mutasi Masuk") {
             let s1 = "completed", s2 = "", s3 = "", s4 = "";
-            if(s.includes("terima") || s.includes("lulus")) { s2=s3=s4="completed"; }
-            else if(s.includes("bayar") || s.includes("tagihan")) { s2="completed"; s3="active"; }
-            else { s2="active"; } 
+            if(s.includes("terima") || s.includes("lulus") || s.includes("selesai")) { 
+                s2=s3=s4="completed"; 
+            }
+            else if(s.includes("bayar") || s.includes("tagihan")) { 
+                s2="completed"; s3="active"; 
+            }
+            else { 
+                s2="active"; 
+            }
             
-            html += `<div class="stepper-item ${s1}"><div class="stepper-icon"><i class="bi bi-ui-checks"></i></div><div class="stepper-text">Form</div></div>
+            html += `
+                <div class="stepper-item ${s1}"><div class="stepper-icon"><i class="bi bi-ui-checks"></i></div><div class="stepper-text">Form</div></div>
                 <div class="stepper-item ${s2}"><div class="stepper-icon"><i class="bi bi-gear-fill"></i></div><div class="stepper-text">Proses</div></div>
                 <div class="stepper-item ${s3}"><div class="stepper-icon"><i class="bi bi-wallet2"></i></div><div class="stepper-text">Bayar</div></div>
-                <div class="stepper-item ${s4}"><div class="stepper-icon"><i class="bi bi-qr-code"></i></div><div class="stepper-text">Diterima</div></div>`;
+                <div class="stepper-item ${s4}"><div class="stepper-icon"><i class="bi bi-qr-code"></i></div><div class="stepper-text">Diterima</div></div>
+            `;
         } else {
+            // Mutasi Keluar
             let s1 = "completed", s2 = "", s3 = "", s4 = "";
-            if(s.includes("selesai") || s.includes("surat") || s.includes("terbit")) { s2=s3=s4="completed"; }
-            else if(s.includes("kepsek") || s.includes("proses")) { s2="completed"; s3="active"; }
-            else { s2="active"; } 
+            if(s.includes("selesai") || s.includes("surat") || s.includes("terbit")) { 
+                s2=s3=s4="completed"; 
+            }
+            else if(s.includes("kepsek") || s.includes("proses")) { 
+                s2="completed"; s3="active"; 
+            }
+            else { 
+                s2="active"; 
+            }
             
-            html += `<div class="stepper-item ${s1}"><div class="stepper-icon"><i class="bi bi-ui-checks"></i></div><div class="stepper-text">Form</div></div>
+            html += `
+                <div class="stepper-item ${s1}"><div class="stepper-icon"><i class="bi bi-ui-checks"></i></div><div class="stepper-text">Form</div></div>
                 <div class="stepper-item ${s2}"><div class="stepper-icon"><i class="bi bi-cash"></i></div><div class="stepper-text">Bendahara</div></div>
                 <div class="stepper-item ${s3}"><div class="stepper-icon"><i class="bi bi-person-badge"></i></div><div class="stepper-text">Kepsek</div></div>
-                <div class="stepper-item ${s4}"><div class="stepper-icon"><i class="bi bi-envelope-paper"></i></div><div class="stepper-text">Surat</div></div>`;
+                <div class="stepper-item ${s4}"><div class="stepper-icon"><i class="bi bi-envelope-paper"></i></div><div class="stepper-text">Surat</div></div>
+            `;
         }
         html += '</div>';
         return html;
