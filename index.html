@@ -1577,7 +1577,16 @@
         setVal('ppdbPaudNonFormal', anak.paudNonFormal);
         setVal('ppdbKelasTujuan', anak.kelasTujuan || "");
 
-        document.getElementById('blokDokumenSemua').style.display = 'none';
+        // 1. Tetap tampilkan area dokumen
+        document.getElementById('blokDokumenSemua').style.display = 'block';
+        
+        // 2. Beri indikator visual bahwa berkas lama sudah aman
+        ['Akta', 'KK', 'Dapodik', 'Rapor', 'SuratOrtu', 'SuratTujuan'].forEach(jenis => {
+           let elIkon = document.getElementById('ikon' + jenis);
+           let elTeks = document.getElementById('teks' + jenis);
+           if(elIkon) elIkon.className = "bi bi-shield-check fs-1 text-success";
+           if(elTeks) elTeks.innerHTML = "Tersimpan <br><small class='text-muted fw-normal'>(Pilih file baru jika ingin ganti)</small>";
+        });
         document.getElementById('btnSubmitPPDB').innerHTML = '<i class="bi bi-save-fill me-2"></i>Simpan Perubahan';
     }
     
