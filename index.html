@@ -1502,22 +1502,19 @@
         if (jalur === "Siswa Baru") {
             let s1 = "completed", s2 = "", s3 = "", s4 = "", s5 = "";
             
-            // Sensor Tahapan Berdasarkan Status di Database
-            if(s.includes("terima") || s.includes("lulus") || s.includes("selesai")) { 
+            // Sensor Tahapan Berdasarkan Status Database
+            if(s.includes("terima") || s.includes("lulus") || s.includes("selesai") || s.includes("acc")) { 
                 s2=s3=s4=s5="completed"; 
             }
-            else if(s.includes("panitia") || s.includes("proses")) { 
+            else if(s.includes("panitia") || s.includes("proses") || s.includes("lunas") || s.includes("berkas") || s.includes("verifikasi")) { 
                 s2=s3="completed"; s4="active"; 
             }
-            else if(s.includes("validasi") || s.includes("cek admin")) { 
-                s2="completed"; s3="active"; 
-            }
-            else if(s.includes("menunggu") || s.includes("bayar") || s.includes("upload") || s.includes("transfer")) { 
-                // Jika sudah bayar atau menunggu validasi bendahara/admin, langkah bayar selesai, lanjut ke validasi/proses
+            else if(s.includes("validasi") || s.includes("cek") || s.includes("upload") || s.includes("bukti") || s.includes("transfer")) { 
                 s2="completed"; s3="active"; 
             }
             else { 
-                s2="active"; // Default awal (Belum bayar)
+                // Default: Menunggu Pembayaran
+                s2="active"; 
             } 
             
             html += `
@@ -1529,10 +1526,11 @@
             `;
         } else if (jalur === "Mutasi Masuk") {
             let s1 = "completed", s2 = "", s3 = "", s4 = "";
-            if(s.includes("terima") || s.includes("lulus") || s.includes("selesai")) { 
+            
+            if(s.includes("terima") || s.includes("lulus") || s.includes("selesai") || s.includes("acc")) { 
                 s2=s3=s4="completed"; 
             }
-            else if(s.includes("bayar") || s.includes("tagihan")) { 
+            else if(s.includes("bayar") || s.includes("tagihan") || s.includes("lunas")) { 
                 s2="completed"; s3="active"; 
             }
             else { 
@@ -1546,12 +1544,12 @@
                 <div class="stepper-item ${s4}"><div class="stepper-icon"><i class="bi bi-qr-code"></i></div><div class="stepper-text">Diterima</div></div>
             `;
         } else {
-            // Mutasi Keluar
             let s1 = "completed", s2 = "", s3 = "", s4 = "";
-            if(s.includes("selesai") || s.includes("surat") || s.includes("terbit")) { 
+            
+            if(s.includes("selesai") || s.includes("surat") || s.includes("terbit") || s.includes("acc")) { 
                 s2=s3=s4="completed"; 
             }
-            else if(s.includes("kepsek") || s.includes("proses")) { 
+            else if(s.includes("kepsek") || s.includes("proses") || s.includes("lunas") || s.includes("bebas")) { 
                 s2="completed"; s3="active"; 
             }
             else { 
