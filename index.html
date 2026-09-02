@@ -556,6 +556,60 @@
        </div>
     </div>
 
+    <!-- AREA MEJA VERIFIKASI PANITIA PPDB -->
+    <div id="areaMejaVerifikasi" style="display: none; padding: 20px;">
+       <div class="alert alert-primary border-0 shadow-sm rounded-4 p-3 mb-4">
+           <div class="d-flex justify-content-between align-items-center">
+               <div>
+                   <h6 class="fw-bold mb-1 text-primary"><i class="bi bi-ui-checks me-2"></i>Meja Verifikasi PPDB</h6>
+                   <p class="small mb-0 text-muted">Kelola berkas pendaftaran dan update status siswa.</p>
+               </div>
+               <button class="btn btn-sm btn-primary fw-bold shadow-sm rounded-pill px-3" onclick="loadMejaVerifikasi()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+           </div>
+       </div>
+       
+       <div class="input-group mb-4 shadow-sm rounded-pill overflow-hidden">
+           <span class="input-group-text bg-white border-0 ps-4"><i class="bi bi-search text-muted"></i></span>
+           <input type="text" class="form-control border-0 py-3" id="cariVerifikasi" onkeyup="filterVerifikasi()" placeholder="Cari nama siswa atau NISN...">
+       </div>
+
+       <div id="listVerifikasiContainer">
+           <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+       </div>
+    </div>
+
+    <!-- MODAL UPDATE STATUS PPDB -->
+    <div class="modal-overlay-custom" id="modalUpdateStatusPPDB">
+        <div class="modal-content-custom text-start" style="max-width: 500px;">
+            <h5 class="fw-bold text-dark mb-3"><i class="bi bi-pencil-square text-primary me-2"></i>Update Status Siswa</h5>
+            <form id="formUpdateStatusPPDB">
+                <input type="hidden" id="usIdDaftar">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted">Nama Siswa</label>
+                    <input type="text" class="form-control bg-light border-0 py-2 fw-bold text-dark" id="usNamaSiswa" readonly>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted">Status Saat Ini</label>
+                    <input type="text" class="form-control bg-light border-0 py-2 text-danger fw-bold" id="usStatusLama" readonly>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label small fw-bold text-primary">Ubah Status Menjadi:</label>
+                    <select class="form-select border-primary py-3 fw-bold bg-light shadow-sm" id="usStatusBaru" required>
+                        <option value="">-- Pilih Status Baru --</option>
+                        <option value="Menunggu Pembayaran">Menunggu Pembayaran (Kembalikan)</option>
+                        <option value="Proses Panitia">Proses Panitia (Berkas Valid & Lunas)</option>
+                        <option value="Diterima">DITERIMA (Selesai & Cetak QR)</option>
+                        <option value="Ditolak">DITOLAK (Berkas Tidak Valid)</option>
+                    </select>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-light w-50 fw-bold rounded-pill" onclick="document.getElementById('modalUpdateStatusPPDB').style.display='none'">Batal</button>
+                    <button type="submit" id="btnSimpanStatus" class="btn btn-primary w-50 fw-bold rounded-pill shadow-sm">Simpan Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- AREA MEJA YAYASAN -->
     <div id="areaMejaYayasan" style="display: none; padding: 15px;">
        <div class="alert alert-danger border-0 shadow-sm rounded-4 p-3 mb-4"><h6 class="fw-bold mb-1"><i class="bi bi-bank me-2"></i>Meja Yayasan</h6><p class="small mb-0">Sahkan tagihan baru atau ubah nilai tagihan lama (Restrukturisasi).</p></div>
@@ -719,7 +773,7 @@
         else if(modulId === 'edit_diskon') { document.getElementById('judulModul').innerText="Pengajuan Kontrak"; document.getElementById('areaEditDiskon').style.display='block'; switchTabPengajuan('draft'); }
         else if(modulId === 'meja_yayasan') { document.getElementById('judulModul').innerText="ACC Tagihan"; document.getElementById('areaMejaYayasan').style.display='block'; tarikDataYayasan(); }
         else if(modulId === 'rekening') { document.getElementById('judulModul').innerText="Rekening Bank"; document.getElementById('areaRekeningBank').style.display='block'; tarikDataRekening(); }
-        else if(modulId === 'verifikasi') { document.getElementById('judulModul').innerText="Verifikasi PPDB"; document.getElementById('areaMejaVerifikasi').style.display='block'; }
+        else if(modulId === 'verifikasi') { document.getElementById('judulModul').innerText="Verifikasi PPDB"; document.getElementById('areaMejaVerifikasi').style.display='block'; loadMejaVerifikasi(); }
         
         // JALUR BARU UNTUK ORTU & GURU
         else if(modulId === 'ppdb_ortu') { document.getElementById('judulModul').innerText="PPDB & Mutasi"; document.getElementById('areaPPDBOrtu').style.display='block'; loadDashboardPPDB(); }
@@ -1364,6 +1418,104 @@
         }
         return null;
     }
+
+    // ==========================================
+    // MESIN MEJA VERIFIKASI (PANITIA PPDB)
+    // ==========================================
+    let dataPPDBGlobalAdmin = [];
+
+    function loadMejaVerifikasi() {
+        const wadah = document.getElementById('listVerifikasiContainer');
+        wadah.innerHTML = `<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>`;
+        
+        fetch(API_URL, { 
+            method: "POST", 
+            body: JSON.stringify({ action: 'get_semua_ppdb', tenantDbId: dataUserGlobal.tenant.idDatabase }) 
+        })
+        .then(r=>r.json()).then(res=>{
+            if(res.status === 'success') {
+                dataPPDBGlobalAdmin = res.data;
+                renderMejaVerifikasi(dataPPDBGlobalAdmin);
+            } else {
+                wadah.innerHTML = `<p class="text-center text-danger">Gagal memuat data.</p>`;
+            }
+        });
+    }
+
+    function renderMejaVerifikasi(dataArr) {
+        let html = "";
+        if(dataArr.length === 0) {
+            document.getElementById('listVerifikasiContainer').innerHTML = `<p class="text-center text-muted mt-4">Belum ada data pendaftar.</p>`;
+            return;
+        }
+
+        // Tampilkan yang terbaru di atas
+        let sortedData = [...dataArr].reverse();
+
+        sortedData.forEach(s => {
+            let sTeks = s.statusVerifikasi.toLowerCase();
+            let badgeStatus = sTeks.includes('terima') ? 'bg-success' : sTeks.includes('tolak') ? 'bg-danger' : 'bg-warning text-dark';
+            
+            // Tombol untuk membuka dokumen jika link ada
+            let btnDokumen = s.linkAkta ? `<a href="${s.linkAkta}" target="_blank" class="btn btn-sm btn-light border rounded-pill text-primary me-2 shadow-sm" title="Buka Dokumen Akta"><i class="bi bi-file-earmark-text"></i> Cek Berkas</a>` : `<span class="small text-muted me-2"><i class="bi bi-x-circle"></i> No File</span>`;
+
+            html += `
+            <div class="card-verifikasi bg-white p-4 rounded-4 shadow-sm mb-3 border-start border-4 border-primary">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <h6 class="fw-bold mb-1 text-dark">${s.namaSiswa}</h6>
+                        <small class="text-muted"><span class="badge bg-secondary me-1">${s.jalurPendaftaran}</span> NISN: ${s.nisn}</small>
+                    </div>
+                    <span class="badge ${badgeStatus} shadow-sm px-2 py-1">${s.statusVerifikasi}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                    <div>${btnDokumen}</div>
+                    <button class="btn btn-sm btn-primary fw-bold rounded-pill px-4 shadow-sm" onclick="bukaModalUpdateStatus('${s.idDaftar}', '${s.namaSiswa}', '${s.statusVerifikasi}')"><i class="bi bi-pencil-square me-1"></i> Update Status</button>
+                </div>
+            </div>`;
+        });
+        document.getElementById('listVerifikasiContainer').innerHTML = html;
+    }
+
+    function filterVerifikasi() {
+        let input = document.getElementById('cariVerifikasi').value.toLowerCase();
+        let filtered = dataPPDBGlobalAdmin.filter(s => s.namaSiswa.toLowerCase().includes(input) || s.nisn.toString().includes(input));
+        renderMejaVerifikasi(filtered);
+    }
+
+    function bukaModalUpdateStatus(id, nama, status) {
+        document.getElementById('usIdDaftar').value = id;
+        document.getElementById('usNamaSiswa').value = nama;
+        document.getElementById('usStatusLama').value = status;
+        document.getElementById('usStatusBaru').value = "";
+        document.getElementById('modalUpdateStatusPPDB').style.display = 'flex';
+    }
+
+    document.getElementById('formUpdateStatusPPDB').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnSimpanStatus');
+        btn.innerHTML = 'Memproses...'; btn.disabled = true;
+
+        const id = document.getElementById('usIdDaftar').value;
+        const statusBaru = document.getElementById('usStatusBaru').value;
+
+        fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify({ 
+                action: 'update_status_ppdb', 
+                tenantDbId: dataUserGlobal.tenant.idDatabase, 
+                idDaftar: id, 
+                status: statusBaru 
+            })
+        }).then(r=>r.json()).then(res=>{
+            btn.innerHTML = 'Simpan Status'; btn.disabled = false;
+            if(res.status === 'success') {
+                document.getElementById('modalUpdateStatusPPDB').style.display = 'none';
+                Toast.fire({icon: 'success', title: 'Status Terkirim!'});
+                loadMejaVerifikasi(); // Muat ulang layar meja admin
+            } else { SwalMin.fire('Gagal', res.pesan, 'error'); }
+        });
+    });
 
     // ==== FUNGSI FORMULIR DINAMIS ====
     function renderFormDinamis() {
